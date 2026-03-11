@@ -1,0 +1,1402 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SalesWorld Academy</title>
+<script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+<script src="https://unpkg.com/@babel/standalone@7.23.2/babel.min.js"></script>
+<style>
+:root{
+  --bg:#07070f;--bg2:#0d0d1a;--bg3:#131326;--card:#0f0f1e;
+  --gold:#F59E0B;--gold2:#D97706;--gold3:#FBBF24;
+  --cyan:#06B6D4;--green:#10B981;--red:#EF4444;--purple:#8B5CF6;
+  --text:#F1F5F9;--text2:#94A3B8;--text3:#475569;
+  --border:rgba(245,158,11,0.15);--border2:rgba(255,255,255,0.06);
+  --grad:linear-gradient(135deg,#F59E0B,#D97706);
+  --shadow:0 20px 60px rgba(0,0,0,0.5)
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--text);overflow-x:hidden}
+::-webkit-scrollbar{width:5px}
+::-webkit-scrollbar-track{background:var(--bg2)}
+::-webkit-scrollbar-thumb{background:rgba(245,158,11,0.3);border-radius:3px}
+.layout{display:flex;min-height:100vh}
+.sidebar{width:240px;background:var(--bg2);border-right:1px solid var(--border2);display:flex;flex-direction:column;position:fixed;top:0;left:0;height:100vh;z-index:50}
+.main{margin-left:240px;flex:1;min-height:100vh}
+.topbar{position:sticky;top:0;z-index:40;background:rgba(7,7,15,0.95);backdrop-filter:blur(20px);border-bottom:1px solid var(--border2);padding:14px 28px;display:flex;align-items:center;justify-content:space-between}
+.content{padding:28px}
+.sb-logo{padding:20px 16px;border-bottom:1px solid var(--border2)}
+.sb-logo-main{font-size:1rem;font-weight:800;letter-spacing:.04em;background:var(--grad);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.sb-logo-sub{font-size:.62rem;color:var(--text3);letter-spacing:.12em;text-transform:uppercase;margin-top:2px}
+.sb-nav{flex:1;padding:12px 8px;overflow-y:auto}
+.sb-btn{width:100%;display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:10px;border:none;background:none;color:var(--text2);font-size:.855rem;font-weight:500;cursor:pointer;transition:all .2s;text-align:left;font-family:inherit}
+.sb-btn:hover{background:rgba(255,255,255,.05);color:var(--text)}
+.sb-btn.active{background:rgba(245,158,11,.12);color:var(--gold)}
+.sb-icon{font-size:1rem;width:20px;text-align:center}
+.sb-user{padding:14px 10px;border-top:1px solid var(--border2);display:flex;align-items:center;gap:10px}
+.sb-av{width:34px;height:34px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:.82rem;background:var(--grad);color:#000;flex-shrink:0}
+.sb-uname{font-size:.82rem;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1}
+.sb-urole{font-size:.62rem;color:var(--text3);text-transform:uppercase;letter-spacing:.05em}
+.sb-out{background:none;border:none;color:var(--text3);cursor:pointer;font-size:1rem;padding:4px;transition:color .2s}
+.sb-out:hover{color:var(--red)}
+/* LOGIN */
+.lp{min-height:100vh;display:flex;align-items:center;justify-content:center;background:var(--bg);position:relative;overflow:hidden}
+.lp-blob{position:absolute;border-radius:50%;pointer-events:none}
+.lb1{width:600px;height:600px;top:-200px;right:-200px;background:radial-gradient(circle,rgba(245,158,11,.07) 0%,transparent 70%)}
+.lb2{width:400px;height:400px;bottom:-100px;left:-100px;background:radial-gradient(circle,rgba(6,182,212,.07) 0%,transparent 70%)}
+.lcard{position:relative;z-index:2;background:var(--card);border:1px solid var(--border);border-radius:24px;padding:44px;width:100%;max-width:400px;box-shadow:var(--shadow)}
+.l-logo{text-align:center;margin-bottom:32px}
+.l-badge{display:inline-flex;align-items:center;justify-content:center;width:60px;height:60px;border-radius:16px;background:var(--grad);margin-bottom:14px;font-size:1.6rem}
+.l-title{font-size:1.4rem;font-weight:800}
+.l-sub{font-size:.82rem;color:var(--text2);margin-top:5px}
+/* FORM */
+.ff{margin-bottom:14px}
+.ff label{display:block;font-size:.72rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--text2);margin-bottom:5px}
+.ff input,.ff select,.ff textarea{width:100%;padding:11px 13px;background:var(--bg2);border:1.5px solid var(--border2);border-radius:10px;font-size:.875rem;color:var(--text);font-family:inherit;outline:none;transition:border-color .3s}
+.ff input:focus,.ff select:focus,.ff textarea:focus{border-color:var(--gold)}
+.ff textarea{resize:vertical;min-height:80px}
+/* BUTTONS */
+.bg{display:inline-flex;align-items:center;justify-content:center;gap:7px;padding:11px 20px;background:var(--grad);color:#000;font-weight:700;font-size:.875rem;border:none;border-radius:10px;cursor:pointer;transition:transform .2s,box-shadow .2s;font-family:inherit}
+.bg:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(245,158,11,.35)}
+.bgh{display:inline-flex;align-items:center;gap:7px;padding:9px 16px;background:rgba(255,255,255,.06);color:var(--text2);font-weight:500;font-size:.82rem;border:1px solid var(--border2);border-radius:9px;cursor:pointer;transition:all .2s;font-family:inherit}
+.bgh:hover{background:rgba(255,255,255,.10);color:var(--text)}
+.br{display:inline-flex;align-items:center;gap:6px;padding:8px 13px;background:rgba(239,68,68,.10);color:#EF4444;font-weight:500;font-size:.8rem;border:1px solid rgba(239,68,68,.2);border-radius:8px;cursor:pointer;transition:all .2s;font-family:inherit}
+.br:hover{background:rgba(239,68,68,.18)}
+.bc{display:inline-flex;align-items:center;gap:6px;padding:8px 13px;background:rgba(6,182,212,.10);color:var(--cyan);font-weight:500;font-size:.8rem;border:1px solid rgba(6,182,212,.2);border-radius:8px;cursor:pointer;transition:all .2s;font-family:inherit}
+.bs{padding:7px 13px!important;font-size:.78rem!important}
+/* CARDS */
+.card{background:var(--card);border:1px solid var(--border2);border-radius:16px;padding:22px}
+.ch{transition:transform .3s,box-shadow .3s,border-color .3s;cursor:pointer}
+.ch:hover{transform:translateY(-4px);box-shadow:0 20px 40px rgba(0,0,0,.4);border-color:var(--border)}
+/* GRID */
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+.g3{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
+.g4{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+/* KPI */
+.ki{width:42px;height:42px;border-radius:11px;display:flex;align-items:center;justify-content:center;font-size:1.2rem;margin-bottom:12px}
+.kv{font-size:1.9rem;font-weight:800;line-height:1}
+.kl{font-size:.75rem;color:var(--text2);margin-top:3px;letter-spacing:.04em}
+/* BADGE */
+.bd{display:inline-flex;align-items:center;padding:2px 9px;border-radius:50px;font-size:.7rem;font-weight:700;letter-spacing:.04em}
+.bgo{background:rgba(245,158,11,.15);color:var(--gold)}
+.bgc{background:rgba(6,182,212,.15);color:var(--cyan)}
+.bgg{background:rgba(16,185,129,.15);color:var(--green)}
+.bgr{background:rgba(239,68,68,.15);color:var(--red)}
+.bgp{background:rgba(139,92,246,.15);color:var(--purple)}
+.bgx{background:rgba(255,255,255,.08);color:var(--text2)}
+/* PROGRESS */
+.pb{height:5px;background:var(--border2);border-radius:3px;overflow:hidden;margin:10px 0}
+.pf{height:100%;border-radius:3px;background:var(--grad);transition:width .6s}
+/* VIDEO */
+.vw{position:relative;padding-bottom:56.25%;height:0;overflow:hidden;border-radius:12px;background:#000}
+.vw iframe{position:absolute;top:0;left:0;width:100%;height:100%;border:none}
+/* TABLE */
+.tbl{width:100%;border-collapse:collapse}
+.tbl th{text-align:left;padding:9px 13px;font-size:.7rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--text3);border-bottom:1px solid var(--border2)}
+.tbl td{padding:12px 13px;font-size:.855rem;border-bottom:1px solid var(--border2);vertical-align:middle}
+.tbl tr:last-child td{border-bottom:none}
+.tbl tr:hover td{background:rgba(255,255,255,.02)}
+/* MODAL */
+.mov{position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:200;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(4px)}
+.mbox{background:var(--bg2);border:1px solid var(--border);border-radius:20px;padding:34px;width:90%;max-width:520px;max-height:90vh;overflow-y:auto;position:relative}
+.mtitle{font-size:1.15rem;font-weight:700;margin-bottom:22px}
+.mclose{position:absolute;top:12px;right:14px;background:var(--bg3);border:none;color:var(--text2);width:28px;height:28px;border-radius:7px;cursor:pointer;font-size:.85rem;transition:all .2s;font-family:inherit}
+.mclose:hover{background:rgba(239,68,68,.2);color:var(--red)}
+/* LESSON */
+.lrow{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:9px;cursor:pointer;transition:background .2s;border:1px solid transparent;margin-bottom:3px}
+.lrow:hover{background:var(--bg3)}
+.lrow.la{background:rgba(245,158,11,.08);border-color:var(--border)}
+.lcheck{width:22px;height:22px;border-radius:50%;border:2px solid var(--border2);display:flex;align-items:center;justify-content:center;font-size:.65rem;flex-shrink:0}
+.lcheck.done{background:var(--green);border-color:var(--green);color:white}
+/* MISC */
+.phdr{margin-bottom:24px}
+.phdr h1{font-size:1.45rem;font-weight:800}
+.phdr p{font-size:.855rem;color:var(--text2);margin-top:3px}
+.fb{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px}
+.fc{display:flex;align-items:center;gap:10px}
+.div1{height:1px;background:var(--border2);margin:18px 0}
+.frow{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.post-av{width:38px;height:38px;border-radius:10px;background:var(--grad);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:.85rem;color:#000;flex-shrink:0}
+.pact{background:none;border:none;color:var(--text3);cursor:pointer;font-size:.8rem;display:flex;align-items:center;gap:5px;transition:color .2s;padding:4px 8px;border-radius:6px;font-family:inherit}
+.pact:hover{color:var(--gold);background:rgba(245,158,11,.08)}
+@media(max-width:768px){.sidebar{display:none}.main{margin-left:0}.g4,.g3,.g2{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const {useState, useEffect} = React;
+
+const SBURL = 'https://khcipjozfamdrhspaxjh.supabase.co';
+const SBKEY = 'sb_publishable_WhQ9J2Dphtxbgkk0vrTu3A_xV1lFLmZ';
+
+async function sb(path, opts) {
+  opts = opts || {};
+  const res = await fetch(SBURL + '/rest/v1/' + path, {
+    headers: {
+      'apikey': SBKEY,
+      'Authorization': 'Bearer ' + SBKEY,
+      'Content-Type': 'application/json',
+      'Prefer': 'return=representation'
+    },
+    method: opts.method || 'GET',
+    body: opts.body || undefined
+  });
+  const txt = await res.text();
+  if (!txt) return [];
+  try { return JSON.parse(txt); } catch(e) { return []; }
+}
+
+function ytId(url) {
+  if (!url) return null;
+  var m = url.match(/(?:youtube\.com\/(?:watch\?v=|embed\/)|youtu\.be\/)([^&
+?#]+)/);
+  return m ? m[1] : null;
+}
+
+function ago(ts) {
+  var d = (new Date() - new Date(ts)) / 1000;
+  if (d < 60) return 'ora';
+  if (d < 3600) return Math.floor(d/60) + ' min fa';
+  if (d < 86400) return Math.floor(d/3600) + ' ore fa';
+  return Math.floor(d/86400) + ' gg fa';
+}
+
+function ini(n) {
+  if (!n) return '?';
+  return n.split(' ').map(function(w){ return w[0]; }).join('').toUpperCase().slice(0,2);
+}
+
+function fmtD(ts) {
+  if (!ts) return '—';
+  return new Date(ts).toLocaleDateString('it-IT', {day:'2-digit', month:'short', year:'numeric'});
+}
+
+function fmtDT(ts) {
+  if (!ts) return '—';
+  return new Date(ts).toLocaleString('it-IT', {day:'2-digit', month:'short', hour:'2-digit', minute:'2-digit'});
+}
+
+/* ── LOGIN ─────────────────────────────────────────── */
+function Login(props) {
+  var onLogin = props.onLogin;
+  var _u = useState(''); var u = _u[0]; var setU = _u[1];
+  var _p = useState(''); var p = _p[0]; var setP = _p[1];
+  var _e = useState(''); var err = _e[0]; var setErr = _e[1];
+  var _l = useState(false); var loading = _l[0]; var setLoading = _l[1];
+
+  async function doLogin(e) {
+    e.preventDefault();
+    setErr(''); setLoading(true);
+    try {
+      var rows = await sb('utenti?username=eq.' + encodeURIComponent(u) + '&password=eq.' + encodeURIComponent(p) + '&attivo=eq.true');
+      if (rows && rows.length) { onLogin(rows[0]); }
+      else { setErr('Credenziali errate o account non attivo.'); }
+    } catch(ex) { setErr('Errore di connessione. Riprova.'); }
+    setLoading(false);
+  }
+
+  return (
+    <div className="lp">
+      <div className="lp-blob lb1"></div>
+      <div className="lp-blob lb2"></div>
+      <div className="lcard">
+        <div className="l-logo">
+          <div className="l-badge">🏆</div>
+          <div className="l-title">SalesWorld Academy</div>
+          <div className="l-sub">Accedi alla tua area riservata</div>
+        </div>
+        <form onSubmit={doLogin}>
+          <div className="ff">
+            <label>Username</label>
+            <input value={u} onChange={function(e){setU(e.target.value)}} placeholder="Il tuo username" required />
+          </div>
+          <div className="ff">
+            <label>Password</label>
+            <input type="password" value={p} onChange={function(e){setP(e.target.value)}} placeholder="La tua password" required />
+          </div>
+          {err && (
+            <div style={{color:'#EF4444',fontSize:'.82rem',marginBottom:12,padding:'8px 12px',background:'rgba(239,68,68,.10)',borderRadius:8}}>
+              {err}
+            </div>
+          )}
+          <button type="submit" className="bg" style={{width:'100%',marginTop:4}} disabled={loading}>
+            {loading ? '⏳ Accesso...' : '🚀 Accedi'}
+          </button>
+        </form>
+        <div style={{textAlign:'center',marginTop:20,fontSize:'.75rem',color:'var(--text3)'}}>
+          Non hai accesso? Contatta il manager.
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ── SIDEBAR ────────────────────────────────────────── */
+function Sidebar(props) {
+  var user = props.user; var tab = props.tab; var setTab = props.setTab; var onLogout = props.onLogout;
+  var isAdmin = user.ruolo === 'admin';
+  var isIstr = user.ruolo === 'istruttore';
+  var roleLabel = isAdmin ? 'Manager' : (isIstr ? 'Istruttore' : 'Studente');
+  var roleColor = isAdmin ? 'var(--gold)' : (isIstr ? 'var(--purple)' : 'var(--cyan)');
+
+  var navItems = isAdmin
+    ? [['dashboard','📊','Dashboard'],['studenti','👥','Studenti'],['istruttori','🎓','Istruttori'],['corsi','📚','Corsi'],['community','💬','Community'],['risorse','📁','Risorse'],['live','🎥','Live & Replay']]
+    : (isIstr
+      ? [['dashboard','📊','Dashboard'],['corsi','📚','Corsi'],['community','💬','Community'],['risorse','📁','Risorse'],['live','🎥','Live']]
+      : [['dashboard','🏠','Dashboard'],['corsi','📚','Corsi'],['community','💬','Community'],['risorse','📁','Risorse'],['live','🎥','Live']]);
+
+  return (
+    <div className="sidebar">
+      <div className="sb-logo">
+        <div className="sb-logo-main">⚡ SalesWorld</div>
+        <div className="sb-logo-sub">Academy Platform</div>
+      </div>
+      <div className="sb-nav">
+        {navItems.map(function(n) {
+          return (
+            <button key={n[0]} className={'sb-btn' + (tab === n[0] ? ' active' : '')} onClick={function(){ setTab(n[0]); }}>
+              <span className="sb-icon">{n[1]}</span>
+              {n[2]}
+            </button>
+          );
+        })}
+      </div>
+      <div className="sb-user">
+        <div className="sb-av">{ini(user.nome)}</div>
+        <div style={{flex:1,minWidth:0}}>
+          <div className="sb-uname">{user.nome}</div>
+          <div className="sb-urole" style={{color:roleColor}}>{roleLabel}</div>
+        </div>
+        <button className="sb-out" title="Esci" onClick={onLogout}>⏻</button>
+      </div>
+    </div>
+  );
+}
+
+/* ── COMMUNITY ──────────────────────────────────────── */
+function CommunityView(props) {
+  var user = props.user;
+  var _posts = useState([]); var posts = _posts[0]; var setPosts = _posts[1];
+  var _txt = useState(''); var txt = _txt[0]; var setTxt = _txt[1];
+  var _cat = useState('generale'); var cat = _cat[0]; var setCat = _cat[1];
+  var _filt = useState('tutti'); var filt = _filt[0]; var setFilt = _filt[1];
+  var _open = useState({}); var open = _open[0]; var setOpen = _open[1];
+  var _nc = useState({}); var nc = _nc[0]; var setNc = _nc[1];
+  var _comm = useState({}); var comm = _comm[0]; var setComm = _comm[1];
+  var isAdmin = user.ruolo === 'admin';
+
+  function load() { sb('community_posts?order=pinnato.desc,created_at.desc').then(setPosts); }
+  useEffect(function(){ load(); }, []);
+
+  async function loadComm(pid) {
+    var rows = await sb('commenti?post_id=eq.' + pid + '&order=created_at.asc');
+    setComm(function(prev){ var n = {}; Object.assign(n, prev); n[pid] = rows; return n; });
+  }
+
+  async function toggleComm(pid) {
+    var next = !open[pid];
+    setOpen(function(prev){ var n = {}; Object.assign(n, prev); n[pid] = next; return n; });
+    if (next && !comm[pid]) await loadComm(pid);
+  }
+
+  async function pubPost() {
+    if (!txt.trim()) return;
+    await sb('community_posts', {method:'POST', body: JSON.stringify({autore_id:user.id,autore_nome:user.nome,autore_ruolo:user.ruolo,contenuto:txt,categoria:cat,like_count:0})});
+    setTxt(''); load();
+  }
+
+  async function likePost(p) {
+    await sb('community_posts?id=eq.' + p.id, {method:'PATCH', body: JSON.stringify({like_count: (p.like_count||0)+1})});
+    load();
+  }
+
+  async function pinPost(p) {
+    await sb('community_posts?id=eq.' + p.id, {method:'PATCH', body: JSON.stringify({pinnato: !p.pinnato})});
+    load();
+  }
+
+  async function delPost(id) {
+    if (!window.confirm('Eliminare?')) return;
+    await sb('community_posts?id=eq.' + id, {method:'DELETE'});
+    load();
+  }
+
+  async function pubComm(pid) {
+    var t = nc[pid];
+    if (!t || !t.trim()) return;
+    await sb('commenti', {method:'POST', body: JSON.stringify({post_id:pid,autore_id:user.id,autore_nome:user.nome,contenuto:t})});
+    setNc(function(prev){ var n = {}; Object.assign(n, prev); n[pid] = ''; return n; });
+    loadComm(pid);
+  }
+
+  var cats = ['tutti','generale','domande','successi','risorse'];
+  var catLbl = {generale:'💬 Generale',domande:'❓ Domande',successi:'🏆 Successi',risorse:'📁 Risorse'};
+  var catCls = {generale:'bgx',domande:'bgc',successi:'bgo',risorse:'bgp'};
+  var filtered = filt === 'tutti' ? posts : posts.filter(function(p){ return p.categoria === filt; });
+
+  return (
+    <div>
+      <div className="phdr">
+        <h1>💬 Community</h1>
+        <p>Condividi, impara e cresci con gli altri membri</p>
+      </div>
+      <div style={{display:'grid',gridTemplateColumns:'1fr 280px',gap:20,alignItems:'start'}}>
+        <div>
+          <div className="card" style={{marginBottom:18}}>
+            <div style={{fontWeight:700,marginBottom:12,fontSize:'.9rem'}}>✍️ Scrivi qualcosa</div>
+            <textarea
+              style={{width:'100%',padding:'10px 12px',background:'var(--bg2)',border:'1.5px solid var(--border2)',borderRadius:10,color:'var(--text)',fontFamily:'inherit',fontSize:'.875rem',outline:'none',resize:'vertical',minHeight:80,display:'block',marginBottom:10}}
+              value={txt}
+              onChange={function(e){setTxt(e.target.value)}}
+              placeholder="Condividi un pensiero, una domanda, un successo..."
+            />
+            <div style={{display:'flex',alignItems:'center',gap:10}}>
+              <select value={cat} onChange={function(e){setCat(e.target.value)}} style={{padding:'7px 12px',background:'var(--bg2)',border:'1px solid var(--border2)',borderRadius:8,color:'var(--text)',fontSize:'.82rem',fontFamily:'inherit',outline:'none'}}>
+                <option value="generale">💬 Generale</option>
+                <option value="domande">❓ Domande</option>
+                <option value="successi">🏆 Successi</option>
+                <option value="risorse">📁 Risorse</option>
+              </select>
+              <button className="bg bs" onClick={pubPost}>📤 Pubblica</button>
+            </div>
+          </div>
+          {filtered.map(function(post) {
+            return (
+              <div key={post.id} className="card" style={{marginBottom:12,borderColor: post.pinnato ? 'var(--border)' : 'var(--border2)'}}>
+                {post.pinnato && <div style={{fontSize:'.7rem',color:'var(--gold)',fontWeight:700,marginBottom:10}}>📌 POST PINNATO</div>}
+                <div style={{display:'flex',alignItems:'center',gap:10,marginBottom:12}}>
+                  <div className="post-av">{ini(post.autore_nome)}</div>
+                  <div style={{flex:1}}>
+                    <div style={{fontWeight:600,fontSize:'.875rem'}}>
+                      {post.autore_nome}
+                      {post.autore_ruolo === 'admin' && <span className="bd bgo" style={{marginLeft:6}}>Manager</span>}
+                      {post.autore_ruolo === 'istruttore' && <span className="bd bgp" style={{marginLeft:6}}>Istruttore</span>}
+                    </div>
+                    <div style={{fontSize:'.72rem',color:'var(--text3)'}}>
+                      {ago(post.created_at)}
+                      {' · '}
+                      <span className={'bd ' + (catCls[post.categoria] || 'bgx')}>{catLbl[post.categoria] || post.categoria}</span>
+                    </div>
+                  </div>
+                  {isAdmin && (
+                    <div style={{display:'flex',gap:6}}>
+                      <button className="bgh bs" onClick={function(){ pinPost(post); }}>{post.pinnato ? '📌' : '📍'}</button>
+                      <button className="br bs" onClick={function(){ delPost(post.id); }}>🗑️</button>
+                    </div>
+                  )}
+                </div>
+                <p style={{fontSize:'.9rem',lineHeight:1.7}}>{post.contenuto}</p>
+                <div style={{display:'flex',gap:8,marginTop:12,paddingTop:10,borderTop:'1px solid var(--border2)'}}>
+                  <button className="pact" onClick={function(){ likePost(post); }}>❤️ {post.like_count||0}</button>
+                  <button className="pact" onClick={function(){ toggleComm(post.id); }}>💬 Commenti</button>
+                </div>
+                {open[post.id] && (
+                  <div style={{marginTop:10,paddingTop:10,borderTop:'1px solid var(--border2)'}}>
+                    {(comm[post.id] || []).map(function(c) {
+                      return (
+                        <div key={c.id} style={{display:'flex',gap:8,marginBottom:8}}>
+                          <div style={{width:28,height:28,borderRadius:7,background:'var(--bg3)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:'.68rem',fontWeight:700,flexShrink:0}}>{ini(c.autore_nome)}</div>
+                          <div style={{background:'var(--bg3)',borderRadius:8,padding:'7px 11px',flex:1}}>
+                            <div style={{fontSize:'.7rem',fontWeight:600,color:'var(--text2)',marginBottom:2}}>{c.autore_nome}</div>
+                            <div style={{fontSize:'.855rem'}}>{c.contenuto}</div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                    <div style={{display:'flex',gap:8,marginTop:6}}>
+                      <input
+                        value={nc[post.id] || ''}
+                        onChange={function(e){ var v = e.target.value; setNc(function(prev){ var n = {}; Object.assign(n, prev); n[post.id] = v; return n; }); }}
+                        placeholder="Scrivi un commento..."
+                        style={{flex:1,padding:'8px 12px',background:'var(--bg3)',border:'1px solid var(--border2)',borderRadius:8,color:'var(--text)',fontSize:'.855rem',fontFamily:'inherit',outline:'none'}}
+                      />
+                      <button className="bg bs" onClick={function(){ pubComm(post.id); }}>➤</button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            );
+          })}
+          {filtered.length === 0 && <div style={{textAlign:'center',color:'var(--text3)',padding:40}}>Nessun post ancora. Scrivi il primo! 🚀</div>}
+        </div>
+        <div>
+          <div className="card" style={{marginBottom:14}}>
+            <div style={{fontWeight:700,fontSize:'.82rem',marginBottom:10}}>🔍 Filtra</div>
+            {cats.map(function(c) {
+              return (
+                <button key={c} className={'sb-btn' + (filt === c ? ' active' : '')} style={{width:'100%',marginBottom:3}} onClick={function(){ setFilt(c); }}>
+                  {c === 'tutti' ? '🌐 Tutti' : catLbl[c]}
+                </button>
+              );
+            })}
+          </div>
+          <div className="card">
+            <div style={{fontWeight:700,fontSize:'.82rem',marginBottom:12}}>📊 Stats</div>
+            <div style={{fontSize:'.82rem',color:'var(--text2)',lineHeight:2}}>
+              <div>Post totali: <strong style={{color:'var(--text)'}}>{posts.length}</strong></div>
+              <div>Pinnati: <strong style={{color:'var(--gold)'}}>{posts.filter(function(p){ return p.pinnato; }).length}</strong></div>
+              <div>Like totali: <strong style={{color:'var(--red)'}}>{posts.reduce(function(a,p){ return a+(p.like_count||0); },0)}</strong></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ── RISORSE ────────────────────────────────────────── */
+function RisorseView(props) {
+  var user = props.user;
+  var _ris = useState([]); var ris = _ris[0]; var setRis = _ris[1];
+  var _modal = useState(false); var modal = _modal[0]; var setModal = _modal[1];
+  var _form = useState({titolo:'',descrizione:'',url:'',tipo:'pdf',categoria:'generale',autore_nome:user.nome});
+  var form = _form[0]; var setForm = _form[1];
+  var _eid = useState(null); var eid = _eid[0]; var setEid = _eid[1];
+  var _filt = useState('tutti'); var filt = _filt[0]; var setFilt = _filt[1];
+  var canEdit = user.ruolo === 'admin' || user.ruolo === 'istruttore';
+  var tipi = ['tutti','pdf','template','checklist','video','altro'];
+  var tipoIcon = {pdf:'📄',template:'📋',checklist:'✅',video:'🎬',altro:'📦'};
+  var tipoCls = {pdf:'bgo',template:'bgc',checklist:'bgg',video:'bgp',altro:'bgx'};
+
+  function load() { sb('risorse?order=created_at.desc').then(setRis); }
+  useEffect(function(){ load(); }, []);
+
+  async function salva() {
+    if (!form.titolo || !form.url) return;
+    if (eid) { await sb('risorse?id=eq.' + eid, {method:'PATCH', body:JSON.stringify(form)}); }
+    else { await sb('risorse', {method:'POST', body:JSON.stringify(form)}); }
+    setModal(false); setEid(null);
+    setForm({titolo:'',descrizione:'',url:'',tipo:'pdf',categoria:'generale',autore_nome:user.nome});
+    load();
+  }
+
+  async function del(id) {
+    if (!window.confirm('Eliminare?')) return;
+    await sb('risorse?id=eq.' + id, {method:'DELETE'});
+    load();
+  }
+
+  function edit(r) {
+    setForm({titolo:r.titolo,descrizione:r.descrizione||'',url:r.url,tipo:r.tipo,categoria:r.categoria,autore_nome:r.autore_nome||''});
+    setEid(r.id); setModal(true);
+  }
+
+  function closeModal() { setModal(false); setEid(null); setForm({titolo:'',descrizione:'',url:'',tipo:'pdf',categoria:'generale',autore_nome:user.nome}); }
+
+  var lista = filt === 'tutti' ? ris : ris.filter(function(r){ return r.tipo === filt; });
+
+  return (
+    <div>
+      <div className="phdr">
+        <div className="fb">
+          <div><h1>📁 Risorse</h1><p>PDF, template, checklist e materiali esclusivi</p></div>
+          {canEdit && <button className="bg" onClick={function(){ setModal(true); }}>+ Aggiungi</button>}
+        </div>
+      </div>
+      <div style={{display:'flex',gap:8,marginBottom:18,flexWrap:'wrap'}}>
+        {tipi.map(function(t) {
+          var active = filt === t;
+          return (
+            <button key={t} className="bgh bs" style={active ? {background:'rgba(245,158,11,.15)',color:'var(--gold)',borderColor:'var(--border)'} : {}} onClick={function(){ setFilt(t); }}>
+              {tipoIcon[t] || '📦'} {t.charAt(0).toUpperCase() + t.slice(1)}
+            </button>
+          );
+        })}
+      </div>
+      <div className="g3">
+        {lista.map(function(r) {
+          return (
+            <div key={r.id} className="card ch">
+              <div style={{width:48,height:48,borderRadius:12,background:'rgba(245,158,11,.10)',border:'1px solid var(--border)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:'1.4rem',marginBottom:14}}>
+                {tipoIcon[r.tipo] || '📦'}
+              </div>
+              <div style={{fontWeight:700,marginBottom:5}}>{r.titolo}</div>
+              <div style={{fontSize:'.8rem',color:'var(--text2)',marginBottom:12,lineHeight:1.5}}>{r.descrizione}</div>
+              <div style={{display:'flex',alignItems:'center',gap:6,marginBottom:14}}>
+                <span className={'bd ' + (tipoCls[r.tipo] || 'bgx')}>{r.tipo}</span>
+                <span style={{fontSize:'.72rem',color:'var(--text3)'}}>by {r.autore_nome || 'Academy'}</span>
+              </div>
+              <div style={{display:'flex',gap:8}}>
+                <a href={r.url} target="_blank" className="bg bs" style={{textDecoration:'none',flex:1,justifyContent:'center'}}>⬇️ Scarica</a>
+                {canEdit && <button className="bgh bs" onClick={function(){ edit(r); }}>✏️</button>}
+                {canEdit && <button className="br bs" onClick={function(){ del(r.id); }}>🗑️</button>}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+      {lista.length === 0 && <div style={{textAlign:'center',color:'var(--text3)',padding:50}}>Nessuna risorsa disponibile.</div>}
+      {modal && (
+        <div className="mov" onClick={function(e){ if(e.target === e.currentTarget) closeModal(); }}>
+          <div className="mbox">
+            <button className="mclose" onClick={closeModal}>✕</button>
+            <div className="mtitle">{eid ? 'Modifica risorsa' : 'Nuova risorsa'}</div>
+            <div className="ff"><label>Titolo *</label><input value={form.titolo} onChange={function(e){setForm(function(f){ return {...f,titolo:e.target.value}; })}} placeholder="Nome della risorsa" /></div>
+            <div className="ff"><label>Descrizione</label><textarea value={form.descrizione} onChange={function(e){setForm(function(f){ return {...f,descrizione:e.target.value}; })}} /></div>
+            <div className="ff"><label>URL *</label><input value={form.url} onChange={function(e){setForm(function(f){ return {...f,url:e.target.value}; })}} placeholder="https://..." /></div>
+            <div className="frow">
+              <div className="ff">
+                <label>Tipo</label>
+                <select value={form.tipo} onChange={function(e){setForm(function(f){ return {...f,tipo:e.target.value}; })}}>
+                  <option value="pdf">📄 PDF</option>
+                  <option value="template">📋 Template</option>
+                  <option value="checklist">✅ Checklist</option>
+                  <option value="video">🎬 Video</option>
+                  <option value="altro">📦 Altro</option>
+                </select>
+              </div>
+              <div className="ff"><label>Categoria</label><input value={form.categoria} onChange={function(e){setForm(function(f){ return {...f,categoria:e.target.value}; })}} /></div>
+            </div>
+            <button className="bg" style={{width:'100%',marginTop:8}} onClick={salva}>💾 Salva</button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ── LIVE ───────────────────────────────────────────── */
+function LiveView(props) {
+  var user = props.user;
+  var _sess = useState([]); var sess = _sess[0]; var setSess = _sess[1];
+  var _modal = useState(false); var modal = _modal[0]; var setModal = _modal[1];
+  var _form = useState({titolo:'',descrizione:'',data_ora:'',url_join:'',url_replay:'',istruttore_nome:user.nome,durata_minuti:60});
+  var form = _form[0]; var setForm = _form[1];
+  var _eid = useState(null); var eid = _eid[0]; var setEid = _eid[1];
+  var isAdmin = user.ruolo === 'admin';
+
+  function load() { sb('live_sessioni?order=data_ora.desc').then(setSess); }
+  useEffect(function(){ load(); }, []);
+
+  async function salva() {
+    if (!form.titolo) return;
+    if (eid) { await sb('live_sessioni?id=eq.' + eid, {method:'PATCH', body:JSON.stringify(form)}); }
+    else { await sb('live_sessioni', {method:'POST', body:JSON.stringify(form)}); }
+    setModal(false); setEid(null);
+    setForm({titolo:'',descrizione:'',data_ora:'',url_join:'',url_replay:'',istruttore_nome:user.nome,durata_minuti:60});
+    load();
+  }
+
+  async function del(id) {
+    if (!window.confirm('Eliminare?')) return;
+    await sb('live_sessioni?id=eq.' + id, {method:'DELETE'});
+    load();
+  }
+
+  function edit(s) {
+    setForm({titolo:s.titolo,descrizione:s.descrizione||'',data_ora:s.data_ora||'',url_join:s.url_join||'',url_replay:s.url_replay||'',istruttore_nome:s.istruttore_nome||'',durata_minuti:s.durata_minuti||60});
+    setEid(s.id); setModal(true);
+  }
+
+  function closeModal() { setModal(false); setEid(null); }
+
+  var now = new Date();
+  var future = sess.filter(function(s){ return !s.completata && s.data_ora && new Date(s.data_ora) > now; });
+  var replay = sess.filter(function(s){ return s.url_replay; });
+
+  return (
+    <div>
+      <div className="phdr">
+        <div className="fb">
+          <div><h1>🎥 Live &amp; Replay</h1><p>Sessioni dal vivo e registrazioni</p></div>
+          {isAdmin && <button className="bg" onClick={function(){ setModal(true); }}>+ Nuova sessione</button>}
+        </div>
+      </div>
+      {future.length > 0 && (
+        <div style={{marginBottom:28}}>
+          <div style={{fontWeight:700,fontSize:'1rem',marginBottom:14,color:'var(--gold)'}}>📅 Prossime live</div>
+          {future.map(function(s) {
+            var dt = s.data_ora ? new Date(s.data_ora) : null;
+            return (
+              <div key={s.id} className="card" style={{marginBottom:10,display:'flex',alignItems:'center',gap:18}}>
+                <div style={{width:56,height:56,borderRadius:12,background:'rgba(245,158,11,.10)',border:'1px solid var(--border)',display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',flexShrink:0}}>
+                  {dt ? (
+                    <div style={{textAlign:'center'}}>
+                      <div style={{fontSize:'1.2rem',fontWeight:800,color:'var(--gold)',lineHeight:1}}>{dt.getDate()}</div>
+                      <div style={{fontSize:'.62rem',color:'var(--text3)',textTransform:'uppercase'}}>{dt.toLocaleDateString('it-IT',{month:'short'})}</div>
+                    </div>
+                  ) : <span style={{fontSize:'1.5rem'}}>📅</span>}
+                </div>
+                <div style={{flex:1}}>
+                  <div style={{fontWeight:700,marginBottom:3}}>{s.titolo}</div>
+                  <div style={{fontSize:'.8rem',color:'var(--text2)'}}>{s.istruttore_nome} · {dt ? dt.toLocaleTimeString('it-IT',{hour:'2-digit',minute:'2-digit'}) : ''} · {s.durata_minuti} min</div>
+                  {s.descrizione && <div style={{fontSize:'.78rem',color:'var(--text3)',marginTop:3}}>{s.descrizione}</div>}
+                </div>
+                <div style={{display:'flex',gap:8}}>
+                  {s.url_join && <a href={s.url_join} target="_blank" className="bg bs" style={{textDecoration:'none'}}>🔴 Partecipa</a>}
+                  {isAdmin && <button className="bgh bs" onClick={function(){ edit(s); }}>✏️</button>}
+                  {isAdmin && <button className="br bs" onClick={function(){ del(s.id); }}>🗑️</button>}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+      {replay.length > 0 && (
+        <div>
+          <div style={{fontWeight:700,fontSize:'1rem',marginBottom:14}}>🎬 Replay disponibili</div>
+          <div className="g3">
+            {replay.map(function(s) {
+              var vid = ytId(s.url_replay);
+              return (
+                <div key={s.id} className="card">
+                  {vid ? (
+                    <div className="vw" style={{marginBottom:12}}>
+                      <iframe src={'https://www.youtube.com/embed/' + vid} allowFullScreen title={s.titolo}></iframe>
+                    </div>
+                  ) : (
+                    <div style={{height:120,background:'var(--bg2)',borderRadius:10,display:'flex',alignItems:'center',justifyContent:'center',fontSize:'2rem',marginBottom:12}}>🎬</div>
+                  )}
+                  <div style={{fontWeight:700,marginBottom:4}}>{s.titolo}</div>
+                  <div style={{fontSize:'.78rem',color:'var(--text2)',marginBottom:10}}>{s.istruttore_nome} · {fmtD(s.data_ora)}</div>
+                  {isAdmin && (
+                    <div style={{display:'flex',gap:6}}>
+                      <button className="bgh bs" onClick={function(){ edit(s); }}>✏️</button>
+                      <button className="br bs" onClick={function(){ del(s.id); }}>🗑️</button>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+      {sess.length === 0 && <div style={{textAlign:'center',color:'var(--text3)',padding:50}}>Nessuna sessione programmata.</div>}
+      {modal && (
+        <div className="mov" onClick={function(e){ if(e.target===e.currentTarget) closeModal(); }}>
+          <div className="mbox">
+            <button className="mclose" onClick={closeModal}>✕</button>
+            <div className="mtitle">{eid ? 'Modifica sessione' : 'Nuova sessione live'}</div>
+            <div className="ff"><label>Titolo *</label><input value={form.titolo} onChange={function(e){setForm(function(f){ return {...f,titolo:e.target.value}; })}} /></div>
+            <div className="ff"><label>Descrizione</label><textarea value={form.descrizione} onChange={function(e){setForm(function(f){ return {...f,descrizione:e.target.value}; })}} /></div>
+            <div className="frow">
+              <div className="ff"><label>Data e ora</label><input type="datetime-local" value={form.data_ora} onChange={function(e){setForm(function(f){ return {...f,data_ora:e.target.value}; })}} /></div>
+              <div className="ff"><label>Durata (min)</label><input type="number" value={form.durata_minuti} onChange={function(e){setForm(function(f){ return {...f,durata_minuti:+e.target.value}; })}} /></div>
+            </div>
+            <div className="ff"><label>Istruttore</label><input value={form.istruttore_nome} onChange={function(e){setForm(function(f){ return {...f,istruttore_nome:e.target.value}; })}} /></div>
+            <div className="ff"><label>Link Zoom/Meet</label><input value={form.url_join} onChange={function(e){setForm(function(f){ return {...f,url_join:e.target.value}; })}} placeholder="https://zoom.us/..." /></div>
+            <div className="ff"><label>Link Replay YouTube</label><input value={form.url_replay} onChange={function(e){setForm(function(f){ return {...f,url_replay:e.target.value}; })}} placeholder="https://youtube.com/watch?v=..." /></div>
+            <button className="bg" style={{width:'100%',marginTop:8}} onClick={salva}>💾 Salva</button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ── COURSE VIEWER ──────────────────────────────────── */
+function CourseViewer(props) {
+  var corso = props.corso; var userId = props.userId; var onBack = props.onBack;
+  var _mod = useState([]); var mods = _mod[0]; var setMods = _mod[1];
+  var _lez = useState([]); var lez = _lez[0]; var setLez = _lez[1];
+  var _prog = useState([]); var prog = _prog[0]; var setProg = _prog[1];
+  var _latt = useState(null); var latt = _latt[0]; var setLatt = _latt[1];
+  var _mopen = useState(null); var mopen = _mopen[0]; var setMopen = _mopen[1];
+
+  useEffect(function(){
+    sb('moduli?corso_id=eq.' + corso.id + '&order=ordine.asc').then(function(m){
+      setMods(m);
+      if (m.length) setMopen(m[0].id);
+    });
+    sb('lezioni?corso_id=eq.' + corso.id + '&order=ordine.asc').then(function(l){
+      setLez(l);
+      if (l.length) setLatt(l[0]);
+    });
+    if (userId) sb('progressi?studente_id=eq.' + userId).then(setProg);
+  }, [corso.id]);
+
+  function isDone(lid) { return prog.some(function(p){ return p.lezione_id === lid && p.completata; }); }
+
+  async function segna(lid) {
+    var exist = prog.find(function(p){ return p.lezione_id === lid; });
+    if (exist) { await sb('progressi?id=eq.' + exist.id, {method:'PATCH', body:JSON.stringify({completata:true})}); }
+    else { await sb('progressi', {method:'POST', body:JSON.stringify({studente_id:userId,lezione_id:lid,completata:true})}); }
+    if (userId) sb('progressi?studente_id=eq.' + userId).then(setProg);
+  }
+
+  function lezMod(mid) { return lez.filter(function(l){ return l.modulo_id === mid; }); }
+  var tot = lez.length;
+  var comp = lez.filter(function(l){ return isDone(l.id); }).length;
+  var pct = tot ? Math.round(comp/tot*100) : 0;
+  var vid = latt ? ytId(latt.video_url) : null;
+
+  return (
+    <div>
+      <div style={{marginBottom:18,display:'flex',alignItems:'center',gap:12}}>
+        <button className="bgh" onClick={onBack}>← Tutti i corsi</button>
+        <div style={{fontWeight:700,fontSize:'1.1rem'}}>{corso.emoji||'📚'} {corso.titolo}</div>
+        <div style={{marginLeft:'auto',fontSize:'.82rem',color:'var(--text2)'}}>Progresso: <strong style={{color:'var(--gold)'}}>{pct}%</strong></div>
+      </div>
+      <div className="pb"><div className="pf" style={{width:pct+'%'}}></div></div>
+      <div style={{display:'grid',gridTemplateColumns:'1fr 320px',gap:20,alignItems:'start',marginTop:16}}>
+        <div>
+          {latt ? (
+            <div className="card">
+              {vid ? (
+                <div className="vw" style={{marginBottom:18}}>
+                  <iframe src={'https://www.youtube.com/embed/' + vid + '?rel=0'} allowFullScreen title={latt.titolo}></iframe>
+                </div>
+              ) : (
+                <div style={{height:180,background:'var(--bg2)',borderRadius:10,display:'flex',alignItems:'center',justifyContent:'center',fontSize:'3rem',marginBottom:18}}>🎬</div>
+              )}
+              <div style={{display:'flex',alignItems:'flex-start',justifyContent:'space-between',gap:12}}>
+                <div>
+                  <div style={{fontWeight:800,fontSize:'1.15rem',marginBottom:5}}>{latt.titolo}</div>
+                  {latt.durata_minuti > 0 && <div style={{fontSize:'.78rem',color:'var(--text2)'}}>⏱️ {latt.durata_minuti} min</div>}
+                </div>
+                {isDone(latt.id) ? (
+                  <div style={{color:'var(--green)',fontWeight:700,fontSize:'.875rem',display:'flex',alignItems:'center',gap:5}}>✅ Completata</div>
+                ) : (
+                  <button className="bg bs" onClick={function(){ segna(latt.id); }}>✅ Segna completata</button>
+                )}
+              </div>
+              {latt.contenuto && (
+                <div style={{marginTop:18,paddingTop:14,borderTop:'1px solid var(--border2)',fontSize:'.9rem',lineHeight:1.8,color:'var(--text2)'}}>{latt.contenuto}</div>
+              )}
+            </div>
+          ) : (
+            <div className="card" style={{textAlign:'center',padding:60,color:'var(--text3)'}}>Seleziona una lezione →</div>
+          )}
+        </div>
+        <div>
+          <div className="card" style={{padding:14}}>
+            <div style={{fontWeight:700,fontSize:'.875rem',marginBottom:14}}>📋 Contenuto</div>
+            {mods.map(function(m) {
+              var lm = lezMod(m.id);
+              var cm = lm.filter(function(l){ return isDone(l.id); }).length;
+              return (
+                <div key={m.id} style={{marginBottom:6}}>
+                  <button onClick={function(){ setMopen(mopen === m.id ? null : m.id); }} style={{width:'100%',background:mopen===m.id?'rgba(245,158,11,.08)':'var(--bg3)',border:'1px solid '+(mopen===m.id?'var(--border)':'transparent'),borderRadius:9,padding:'9px 12px',color:'var(--text)',fontFamily:'inherit',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'space-between',fontSize:'.855rem',fontWeight:600}}>
+                    <span>{m.titolo}</span>
+                    <span style={{fontSize:'.7rem',color:'var(--text3)'}}>{cm}/{lm.length} {mopen===m.id?'▲':'▼'}</span>
+                  </button>
+                  {mopen === m.id && (
+                    <div style={{paddingLeft:8,marginTop:3}}>
+                      {lm.map(function(l) {
+                        return (
+                          <div key={l.id} className={'lrow' + (latt && latt.id === l.id ? ' la' : '')} onClick={function(){ setLatt(l); }}>
+                            <div className={'lcheck' + (isDone(l.id) ? ' done' : '')}>{isDone(l.id) ? '✓' : ''}</div>
+                            <div style={{flex:1,minWidth:0}}>
+                              <div style={{fontSize:'.82rem',fontWeight:500,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{l.titolo}</div>
+                              {l.durata_minuti > 0 && <div style={{fontSize:'.7rem',color:'var(--text3)'}}>{l.durata_minuti} min</div>}
+                            </div>
+                            {l.video_url && <span style={{fontSize:'.9rem'}}>▶️</span>}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+            {mods.length === 0 && <div style={{textAlign:'center',color:'var(--text3)',padding:16,fontSize:'.82rem'}}>Nessun contenuto ancora.</div>}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ── CORSI VIEW ─────────────────────────────────────── */
+function CorsiView(props) {
+  var user = props.user;
+  var _corsi = useState([]); var corsi = _corsi[0]; var setCorsi = _corsi[1];
+  var _aperto = useState(null); var aperto = _aperto[0]; var setAperto = _aperto[1];
+  var _src = useState(''); var src = _src[0]; var setSrc = _src[1];
+
+  useEffect(function(){
+    var q = 'corsi?order=ordine.asc';
+    if (user.ruolo === 'studente') q += '&pubblicato=eq.true';
+    sb(q).then(setCorsi);
+  }, []);
+
+  if (aperto) return <CourseViewer corso={aperto} userId={user.id} onBack={function(){ setAperto(null); }} />;
+
+  var livCls = {base:'bgg',intermedio:'bgo',avanzato:'bgr'};
+  var filt = corsi.filter(function(c){ return c.titolo.toLowerCase().indexOf(src.toLowerCase()) >= 0; });
+
+  return (
+    <div>
+      <div className="phdr">
+        <div className="fb">
+          <div><h1>📚 Corsi</h1><p>I tuoi corsi disponibili</p></div>
+          <input style={{padding:'9px 14px',background:'var(--bg2)',border:'1px solid var(--border2)',borderRadius:9,color:'var(--text)',outline:'none',width:200,fontFamily:'inherit',fontSize:'.855rem'}} placeholder="🔍 Cerca..." value={src} onChange={function(e){setSrc(e.target.value)}} />
+        </div>
+      </div>
+      <div className="g3">
+        {filt.map(function(c) {
+          return (
+            <div key={c.id} className="card ch" onClick={function(){ setAperto(c); }}>
+              <div style={{height:130,borderRadius:10,background:'linear-gradient(135deg,' + (c.colore||'#F59E0B') + '22,' + (c.colore||'#F59E0B') + '11)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:'3rem',marginBottom:14}}>
+                {c.emoji || '📚'}
+              </div>
+              <div style={{display:'flex',gap:6,marginBottom:8,flexWrap:'wrap'}}>
+                <span className={'bd ' + (livCls[c.livello] || 'bgx')}>{c.livello || 'base'}</span>
+                {!c.pubblicato && <span className="bd bgr">Bozza</span>}
+              </div>
+              <div style={{fontWeight:700,fontSize:'1rem',marginBottom:5}}>{c.titolo}</div>
+              <div style={{fontSize:'.8rem',color:'var(--text2)',lineHeight:1.5,marginBottom:10}}>{c.descrizione}</div>
+              <div style={{fontSize:'.75rem',color:'var(--text3)'}}>👨‍🏫 {c.istruttore_nome || 'Academy'}</div>
+            </div>
+          );
+        })}
+      </div>
+      {filt.length === 0 && <div style={{textAlign:'center',color:'var(--text3)',padding:60}}>Nessun corso trovato.</div>}
+    </div>
+  );
+}
+
+/* ── ADMIN CORSI BUILDER ────────────────────────────── */
+function AdminCorsi() {
+  var _corsi = useState([]); var corsi = _corsi[0]; var setCorsi = _corsi[1];
+  var _istr = useState([]); var istr = _istr[0]; var setIstr = _istr[1];
+  var _csel = useState(null); var csel = _csel[0]; var setCsel = _csel[1];
+  var _msel = useState(null); var msel = _msel[0]; var setMsel = _msel[1];
+  var _mods = useState([]); var mods = _mods[0]; var setMods = _mods[1];
+  var _lez = useState([]); var lez = _lez[0]; var setLez = _lez[1];
+  var _mc = useState(false); var mc = _mc[0]; var setMc = _mc[1];
+  var _mm = useState(false); var mm = _mm[0]; var setMm = _mm[1];
+  var _ml = useState(false); var ml = _ml[0]; var setMl = _ml[1];
+  var _fc = useState({titolo:'',descrizione:'',emoji:'📚',livello:'base',colore:'#F59E0B',istruttore_nome:'',istruttore_id:'',pubblicato:false});
+  var fc = _fc[0]; var setFc = _fc[1];
+  var _fm = useState({titolo:'',descrizione:'',ordine:0});
+  var fm = _fm[0]; var setFm = _fm[1];
+  var _fl = useState({titolo:'',video_url:'',contenuto:'',durata_minuti:0,ordine:0});
+  var fl = _fl[0]; var setFl = _fl[1];
+  var _ecid = useState(null); var ecid = _ecid[0]; var setEcid = _ecid[1];
+  var _emid = useState(null); var emid = _emid[0]; var setEmid = _emid[1];
+  var _elid = useState(null); var elid = _elid[0]; var setElid = _elid[1];
+
+  function loadCorsi() { sb('corsi?order=ordine.asc').then(setCorsi); }
+  function loadMods(cid) { sb('moduli?corso_id=eq.' + cid + '&order=ordine.asc').then(function(m){ setMods(m); setMsel(null); setLez([]); }); }
+  function loadLez(mid) { sb('lezioni?modulo_id=eq.' + mid + '&order=ordine.asc').then(setLez); }
+
+  useEffect(function(){
+    loadCorsi();
+    sb('utenti?ruolo=eq.istruttore').then(setIstr);
+  }, []);
+
+  async function salvaCorso() {
+    if (!fc.titolo) return;
+    if (ecid) { await sb('corsi?id=eq.' + ecid, {method:'PATCH', body:JSON.stringify(fc)}); }
+    else { await sb('corsi', {method:'POST', body:JSON.stringify(fc)}); }
+    setMc(false); setEcid(null);
+    setFc({titolo:'',descrizione:'',emoji:'📚',livello:'base',colore:'#F59E0B',istruttore_nome:'',istruttore_id:'',pubblicato:false});
+    loadCorsi();
+  }
+
+  async function salvaMod() {
+    if (!fm.titolo || !csel) return;
+    if (emid) { await sb('moduli?id=eq.' + emid, {method:'PATCH', body:JSON.stringify(fm)}); }
+    else { await sb('moduli', {method:'POST', body:JSON.stringify({...fm, corso_id:csel.id})}); }
+    setMm(false); setEmid(null); setFm({titolo:'',descrizione:'',ordine:0});
+    loadMods(csel.id);
+  }
+
+  async function salvaLez() {
+    if (!fl.titolo || !msel || !csel) return;
+    if (elid) { await sb('lezioni?id=eq.' + elid, {method:'PATCH', body:JSON.stringify(fl)}); }
+    else { await sb('lezioni', {method:'POST', body:JSON.stringify({...fl, modulo_id:msel.id, corso_id:csel.id})}); }
+    setMl(false); setElid(null); setFl({titolo:'',video_url:'',contenuto:'',durata_minuti:0,ordine:0});
+    loadLez(msel.id);
+  }
+
+  async function delCorso(id) {
+    if (!window.confirm('Eliminare corso e tutti i contenuti?')) return;
+    await sb('corsi?id=eq.' + id, {method:'DELETE'});
+    if (csel && csel.id === id) { setCsel(null); setMods([]); setLez([]); }
+    loadCorsi();
+  }
+
+  async function delMod(id) {
+    if (!window.confirm('Eliminare modulo e lezioni?')) return;
+    await sb('moduli?id=eq.' + id, {method:'DELETE'});
+    if (csel) loadMods(csel.id);
+  }
+
+  async function delLez(id) {
+    if (!window.confirm('Eliminare lezione?')) return;
+    await sb('lezioni?id=eq.' + id, {method:'DELETE'});
+    if (msel) loadLez(msel.id);
+  }
+
+  async function togglePub(c) {
+    await sb('corsi?id=eq.' + c.id, {method:'PATCH', body:JSON.stringify({pubblicato:!c.pubblicato})});
+    loadCorsi();
+    if (csel && csel.id === c.id) setCsel({...csel, pubblicato:!c.pubblicato});
+  }
+
+  var lVid = fl.video_url ? ytId(fl.video_url) : null;
+
+  return (
+    <div>
+      <div className="phdr">
+        <div className="fb">
+          <div><h1>📚 Gestione Corsi</h1><p>Crea corsi, moduli e lezioni</p></div>
+          <button className="bg" onClick={function(){ setMc(true); }}>+ Nuovo corso</button>
+        </div>
+      </div>
+      <div style={{display:'grid',gridTemplateColumns:'240px 240px 1fr',gap:14,alignItems:'start'}}>
+        <div className="card" style={{padding:12}}>
+          <div style={{fontWeight:700,fontSize:'.78rem',color:'var(--text3)',marginBottom:10,padding:'0 4px',letterSpacing:'.08em',textTransform:'uppercase'}}>Corsi</div>
+          {corsi.map(function(c) {
+            return (
+              <div key={c.id}
+                style={{padding:'9px 10px',borderRadius:9,cursor:'pointer',background:csel&&csel.id===c.id?'rgba(245,158,11,.10)':'transparent',border:'1px solid '+(csel&&csel.id===c.id?'var(--border)':'transparent'),marginBottom:3,display:'flex',alignItems:'center',gap:8}}
+                onClick={function(){ setCsel(c); loadMods(c.id); }}>
+                <span style={{fontSize:'1.1rem'}}>{c.emoji||'📚'}</span>
+                <div style={{flex:1,minWidth:0}}>
+                  <div style={{fontSize:'.82rem',fontWeight:600,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{c.titolo}</div>
+                  <div style={{fontSize:'.68rem',color:c.pubblicato?'var(--green)':'var(--text3)'}}>{c.pubblicato?'✅ Pubblicato':'📝 Bozza'}</div>
+                </div>
+              </div>
+            );
+          })}
+          {corsi.length === 0 && <div style={{textAlign:'center',color:'var(--text3)',padding:16,fontSize:'.78rem'}}>Nessun corso.</div>}
+        </div>
+        <div className="card" style={{padding:12}}>
+          <div style={{fontWeight:700,fontSize:'.78rem',color:'var(--text3)',marginBottom:10,padding:'0 4px',letterSpacing:'.08em',textTransform:'uppercase',display:'flex',alignItems:'center',justifyContent:'space-between'}}>
+            Moduli
+            {csel && <button className="bg" style={{fontSize:'.68rem',padding:'3px 8px'}} onClick={function(){ setMm(true); }}>+</button>}
+          </div>
+          {!csel && <div style={{textAlign:'center',color:'var(--text3)',padding:16,fontSize:'.78rem'}}>Seleziona un corso</div>}
+          {mods.map(function(m) {
+            return (
+              <div key={m.id}
+                style={{padding:'9px 10px',borderRadius:9,cursor:'pointer',background:msel&&msel.id===m.id?'rgba(6,182,212,.10)':'transparent',border:'1px solid '+(msel&&msel.id===m.id?'rgba(6,182,212,.3)':'transparent'),marginBottom:3,display:'flex',alignItems:'center',gap:8}}
+                onClick={function(){ setMsel(m); loadLez(m.id); }}>
+                <span>📦</span>
+                <div style={{flex:1,minWidth:0,fontSize:'.82rem',fontWeight:600,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{m.titolo}</div>
+                <div style={{display:'flex',gap:3}} onClick={function(e){e.stopPropagation();}}>
+                  <button className="bgh" style={{padding:'2px 5px',fontSize:'.7rem'}} onClick={function(){ setFm({titolo:m.titolo,descrizione:m.descrizione||'',ordine:m.ordine||0}); setEmid(m.id); setMm(true); }}>✏️</button>
+                  <button className="br" style={{padding:'2px 5px',fontSize:'.7rem'}} onClick={function(){ delMod(m.id); }}>🗑️</button>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+        <div className="card" style={{padding:12}}>
+          <div style={{fontWeight:700,fontSize:'.78rem',color:'var(--text3)',marginBottom:10,padding:'0 4px',letterSpacing:'.08em',textTransform:'uppercase',display:'flex',alignItems:'center',justifyContent:'space-between'}}>
+            Lezioni
+            {msel && <button className="bg" style={{fontSize:'.68rem',padding:'3px 8px'}} onClick={function(){ setMl(true); }}>+</button>}
+          </div>
+          {!msel && <div style={{textAlign:'center',color:'var(--text3)',padding:16,fontSize:'.78rem'}}>Seleziona un modulo</div>}
+          {csel && msel && (
+            <div style={{marginBottom:10,padding:'8px 10px',background:'var(--bg3)',borderRadius:9,fontSize:'.78rem',color:'var(--text2)'}}>
+              <strong style={{color:'var(--gold)'}}>{csel.titolo}</strong> › {msel.titolo}
+              <div style={{marginTop:6,display:'flex',gap:5,flexWrap:'wrap'}}>
+                <button className={'bs ' + (csel.pubblicato?'br':'bc')} style={{padding:'3px 8px',fontSize:'.7rem'}} onClick={function(){ togglePub(csel); }}>
+                  {csel.pubblicato ? '🔒 Archivia' : '✅ Pubblica'}
+                </button>
+                <button className="bgh" style={{padding:'3px 8px',fontSize:'.7rem'}} onClick={function(){
+                  setFc({titolo:csel.titolo,descrizione:csel.descrizione||'',emoji:csel.emoji||'📚',livello:csel.livello||'base',colore:csel.colore||'#F59E0B',istruttore_nome:csel.istruttore_nome||'',istruttore_id:csel.istruttore_id||'',pubblicato:csel.pubblicato});
+                  setEcid(csel.id); setMc(true);
+                }}>✏️ Modifica</button>
+                <button className="br" style={{padding:'3px 8px',fontSize:'.7rem'}} onClick={function(){ delCorso(csel.id); }}>🗑️</button>
+              </div>
+            </div>
+          )}
+          {lez.map(function(l) {
+            return (
+              <div key={l.id} style={{padding:'9px 10px',borderRadius:9,background:'var(--bg3)',marginBottom:4,display:'flex',alignItems:'center',gap:8}}>
+                <span style={{fontSize:'.9rem'}}>{l.video_url?'▶️':'📄'}</span>
+                <div style={{flex:1,minWidth:0}}>
+                  <div style={{fontSize:'.82rem',fontWeight:600,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{l.titolo}</div>
+                  {l.durata_minuti > 0 && <div style={{fontSize:'.68rem',color:'var(--text3)'}}>{l.durata_minuti} min</div>}
+                </div>
+                <div style={{display:'flex',gap:3}}>
+                  <button className="bgh" style={{padding:'2px 5px',fontSize:'.7rem'}} onClick={function(){ setFl({titolo:l.titolo,video_url:l.video_url||'',contenuto:l.contenuto||'',durata_minuti:l.durata_minuti||0,ordine:l.ordine||0}); setElid(l.id); setMl(true); }}>✏️</button>
+                  <button className="br" style={{padding:'2px 5px',fontSize:'.7rem'}} onClick={function(){ delLez(l.id); }}>🗑️</button>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+      {mc && (
+        <div className="mov" onClick={function(e){ if(e.target===e.currentTarget){setMc(false);setEcid(null);} }}>
+          <div className="mbox">
+            <button className="mclose" onClick={function(){setMc(false);setEcid(null);}}>✕</button>
+            <div className="mtitle">{ecid ? 'Modifica corso' : 'Nuovo corso'}</div>
+            <div className="frow">
+              <div className="ff"><label>Emoji</label><input value={fc.emoji} onChange={function(e){setFc(function(f){return {...f,emoji:e.target.value};})}} style={{textAlign:'center',fontSize:'1.4rem'}} /></div>
+              <div className="ff"><label>Titolo *</label><input value={fc.titolo} onChange={function(e){setFc(function(f){return {...f,titolo:e.target.value};})}} /></div>
+            </div>
+            <div className="ff"><label>Descrizione</label><textarea value={fc.descrizione} onChange={function(e){setFc(function(f){return {...f,descrizione:e.target.value};})}} /></div>
+            <div className="frow">
+              <div className="ff">
+                <label>Livello</label>
+                <select value={fc.livello} onChange={function(e){setFc(function(f){return {...f,livello:e.target.value};})}}>
+                  <option value="base">🟢 Base</option>
+                  <option value="intermedio">🟡 Intermedio</option>
+                  <option value="avanzato">🔴 Avanzato</option>
+                </select>
+              </div>
+              <div className="ff"><label>Colore</label><input type="color" value={fc.colore} onChange={function(e){setFc(function(f){return {...f,colore:e.target.value};})}} style={{height:42,padding:4}} /></div>
+            </div>
+            <div className="frow">
+              <div className="ff">
+                <label>Istruttore</label>
+                <select value={fc.istruttore_id} onChange={function(e){
+                  var i = istr.find(function(x){ return x.id === e.target.value; });
+                  setFc(function(f){ return {...f,istruttore_id:e.target.value,istruttore_nome:i?i.nome:'Academy'}; });
+                }}>
+                  <option value="">Academy</option>
+                  {istr.map(function(i){ return <option key={i.id} value={i.id}>{i.nome}</option>; })}
+                </select>
+              </div>
+              <div className="ff">
+                <label>Visibilità</label>
+                <select value={fc.pubblicato?'si':'no'} onChange={function(e){setFc(function(f){return {...f,pubblicato:e.target.value==='si'};})}}>
+                  <option value="no">📝 Bozza</option>
+                  <option value="si">✅ Pubblicato</option>
+                </select>
+              </div>
+            </div>
+            <button className="bg" style={{width:'100%',marginTop:8}} onClick={salvaCorso}>💾 Salva corso</button>
+          </div>
+        </div>
+      )}
+      {mm && (
+        <div className="mov" onClick={function(e){ if(e.target===e.currentTarget){setMm(false);setEmid(null);} }}>
+          <div className="mbox">
+            <button className="mclose" onClick={function(){setMm(false);setEmid(null);}}>✕</button>
+            <div className="mtitle">{emid ? 'Modifica modulo' : 'Nuovo modulo'}</div>
+            <div className="ff"><label>Titolo *</label><input value={fm.titolo} onChange={function(e){setFm(function(f){return {...f,titolo:e.target.value};})}} /></div>
+            <div className="ff"><label>Descrizione</label><textarea value={fm.descrizione} onChange={function(e){setFm(function(f){return {...f,descrizione:e.target.value};})}} /></div>
+            <div className="ff"><label>Ordine</label><input type="number" value={fm.ordine} onChange={function(e){setFm(function(f){return {...f,ordine:+e.target.value};})}} /></div>
+            <button className="bg" style={{width:'100%',marginTop:8}} onClick={salvaMod}>💾 Salva modulo</button>
+          </div>
+        </div>
+      )}
+      {ml && (
+        <div className="mov" onClick={function(e){ if(e.target===e.currentTarget){setMl(false);setElid(null);} }}>
+          <div className="mbox">
+            <button className="mclose" onClick={function(){setMl(false);setElid(null);}}>✕</button>
+            <div className="mtitle">{elid ? 'Modifica lezione' : 'Nuova lezione'}</div>
+            <div className="ff"><label>Titolo *</label><input value={fl.titolo} onChange={function(e){setFl(function(f){return {...f,titolo:e.target.value};})}} /></div>
+            <div className="ff"><label>URL Video YouTube (unlisted)</label><input value={fl.video_url} onChange={function(e){setFl(function(f){return {...f,video_url:e.target.value};})}} placeholder="https://youtube.com/watch?v=..." /></div>
+            {lVid && (
+              <div style={{marginBottom:12}}>
+                <iframe src={'https://www.youtube.com/embed/' + lVid} style={{width:'100%',height:160,borderRadius:8,border:'none'}} allowFullScreen></iframe>
+              </div>
+            )}
+            <div className="ff"><label>Note / Contenuto</label><textarea value={fl.contenuto} onChange={function(e){setFl(function(f){return {...f,contenuto:e.target.value};})}} /></div>
+            <div className="frow">
+              <div className="ff"><label>Durata (min)</label><input type="number" value={fl.durata_minuti} onChange={function(e){setFl(function(f){return {...f,durata_minuti:+e.target.value};})}} /></div>
+              <div className="ff"><label>Ordine</label><input type="number" value={fl.ordine} onChange={function(e){setFl(function(f){return {...f,ordine:+e.target.value};})}} /></div>
+            </div>
+            <button className="bg" style={{width:'100%',marginTop:8}} onClick={salvaLez}>💾 Salva lezione</button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ── ADMIN UTENTI ───────────────────────────────────── */
+function AdminUtenti(props) {
+  var user = props.user; var ruolo = props.ruolo;
+  var _lista = useState([]); var lista = _lista[0]; var setLista = _lista[1];
+  var _modal = useState(false); var modal = _modal[0]; var setModal = _modal[1];
+  var _form = useState({username:'',password:'',nome:'',email:'',attivo:true,bio:''});
+  var form = _form[0]; var setForm = _form[1];
+  var _eid = useState(null); var eid = _eid[0]; var setEid = _eid[1];
+  var _src = useState(''); var src = _src[0]; var setSrc = _src[1];
+  var label = ruolo === 'istruttore' ? 'Istruttori' : 'Studenti';
+
+  function load() { sb('utenti?ruolo=eq.' + ruolo + '&order=created_at.desc').then(setLista); }
+  useEffect(function(){ load(); }, [ruolo]);
+
+  async function salva() {
+    if (!form.username || !form.password || !form.nome) return;
+    if (eid) { await sb('utenti?id=eq.' + eid, {method:'PATCH', body:JSON.stringify(form)}); }
+    else { await sb('utenti', {method:'POST', body:JSON.stringify({...form, ruolo:ruolo})}); }
+    setModal(false); setEid(null); setForm({username:'',password:'',nome:'',email:'',attivo:true,bio:''});
+    load();
+  }
+
+  async function toggleA(s) {
+    await sb('utenti?id=eq.' + s.id, {method:'PATCH', body:JSON.stringify({attivo:!s.attivo})});
+    load();
+  }
+
+  async function del(id) {
+    if (!window.confirm('Eliminare utente?')) return;
+    await sb('utenti?id=eq.' + id, {method:'DELETE'});
+    load();
+  }
+
+  function edit(s) {
+    setForm({username:s.username,password:s.password,nome:s.nome||'',email:s.email||'',attivo:s.attivo,bio:s.bio||''});
+    setEid(s.id); setModal(true);
+  }
+
+  function closeModal() { setModal(false); setEid(null); setForm({username:'',password:'',nome:'',email:'',attivo:true,bio:''}); }
+
+  var filt = lista.filter(function(s){
+    return (s.nome||'').toLowerCase().indexOf(src.toLowerCase()) >= 0 || (s.username||'').toLowerCase().indexOf(src.toLowerCase()) >= 0;
+  });
+
+  return (
+    <div>
+      <div className="phdr">
+        <div className="fb">
+          <div><h1>{'👥'} {label}</h1><p>Gestisci gli {label.toLowerCase()} della piattaforma</p></div>
+          <div style={{display:'flex',gap:10}}>
+            <input style={{padding:'9px 14px',background:'var(--bg2)',border:'1px solid var(--border2)',borderRadius:9,color:'var(--text)',outline:'none',width:180,fontFamily:'inherit',fontSize:'.855rem'}} placeholder="🔍 Cerca..." value={src} onChange={function(e){setSrc(e.target.value)}} />
+            <button className="bg" onClick={function(){ setModal(true); }}>+ Aggiungi</button>
+          </div>
+        </div>
+      </div>
+      <div className="card" style={{padding:0,overflow:'hidden'}}>
+        <table className="tbl">
+          <thead>
+            <tr>
+              <th>Nome</th>
+              <th>Username</th>
+              <th>Email</th>
+              <th>Stato</th>
+              <th>Iscritto</th>
+              <th>Azioni</th>
+            </tr>
+          </thead>
+          <tbody>
+            {filt.map(function(s) {
+              return (
+                <tr key={s.id}>
+                  <td>
+                    <div style={{display:'flex',alignItems:'center',gap:10}}>
+                      <div style={{width:32,height:32,borderRadius:8,background:'var(--grad)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:'.78rem',fontWeight:700,color:'#000',flexShrink:0}}>{ini(s.nome)}</div>
+                      <div style={{fontWeight:600,fontSize:'.875rem'}}>{s.nome}</div>
+                    </div>
+                  </td>
+                  <td><span style={{fontFamily:'monospace',fontSize:'.82rem',background:'var(--bg3)',padding:'2px 8px',borderRadius:5}}>{s.username}</span></td>
+                  <td style={{color:'var(--text2)',fontSize:'.82rem'}}>{s.email||'—'}</td>
+                  <td><span className={'bd ' + (s.attivo?'bgg':'bgr')}>{s.attivo?'Attivo':'Disattivo'}</span></td>
+                  <td style={{color:'var(--text3)',fontSize:'.78rem'}}>{fmtD(s.created_at)}</td>
+                  <td>
+                    <div style={{display:'flex',gap:6}}>
+                      <button className="bgh bs" onClick={function(){ edit(s); }}>✏️</button>
+                      <button className={'bs ' + (s.attivo ? 'br' : 'bc')} onClick={function(){ toggleA(s); }}>{s.attivo?'🔒':'🔓'}</button>
+                      <button className="br bs" onClick={function(){ del(s.id); }}>🗑️</button>
+                    </div>
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+        {filt.length === 0 && <div style={{textAlign:'center',padding:40,color:'var(--text3)'}}>Nessun utente trovato.</div>}
+      </div>
+      {modal && (
+        <div className="mov" onClick={function(e){ if(e.target===e.currentTarget) closeModal(); }}>
+          <div className="mbox">
+            <button className="mclose" onClick={closeModal}>✕</button>
+            <div className="mtitle">{eid ? 'Modifica' : 'Nuovo ' + label.slice(0,-1)}</div>
+            <div className="frow">
+              <div className="ff"><label>Nome *</label><input value={form.nome} onChange={function(e){setForm(function(f){return {...f,nome:e.target.value};})}} placeholder="Mario Rossi" /></div>
+              <div className="ff"><label>Email</label><input type="email" value={form.email} onChange={function(e){setForm(function(f){return {...f,email:e.target.value};})}} /></div>
+            </div>
+            <div className="frow">
+              <div className="ff"><label>Username *</label><input value={form.username} onChange={function(e){setForm(function(f){return {...f,username:e.target.value};})}} /></div>
+              <div className="ff"><label>Password *</label><input value={form.password} onChange={function(e){setForm(function(f){return {...f,password:e.target.value};})}} /></div>
+            </div>
+            <div className="ff">
+              <label>Stato</label>
+              <select value={form.attivo?'si':'no'} onChange={function(e){setForm(function(f){return {...f,attivo:e.target.value==='si'};});}}>
+                <option value="si">✅ Attivo</option>
+                <option value="no">🔒 Disattivo</option>
+              </select>
+            </div>
+            <button className="bg" style={{width:'100%',marginTop:8}} onClick={salva}>💾 Salva</button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ── DASHBOARD ──────────────────────────────────────── */
+function Dashboard(props) {
+  var user = props.user; var setTab = props.setTab;
+  var isAdmin = user.ruolo === 'admin';
+  var _stats = useState({studenti:0,istruttori:0,corsi:0,lezioni:0,post:0,completate:0});
+  var stats = _stats[0]; var setStats = _stats[1];
+  var _live = useState([]); var live = _live[0]; var setLive = _live[1];
+
+  useEffect(function(){
+    if (isAdmin) {
+      sb('utenti?ruolo=eq.studente').then(function(r){ setStats(function(s){ return {...s,studenti:r.length}; }); });
+      sb('utenti?ruolo=eq.istruttore').then(function(r){ setStats(function(s){ return {...s,istruttori:r.length}; }); });
+    }
+    sb('corsi?pubblicato=eq.true').then(function(r){ setStats(function(s){ return {...s,corsi:r.length}; }); });
+    sb('lezioni').then(function(r){ setStats(function(s){ return {...s,lezioni:r.length}; }); });
+    sb('community_posts').then(function(r){ setStats(function(s){ return {...s,post:r.length}; }); });
+    if (!isAdmin) {
+      sb('progressi?studente_id=eq.' + user.id + '&completata=eq.true').then(function(r){ setStats(function(s){ return {...s,completate:r.length}; }); });
+    }
+    sb('live_sessioni?order=data_ora.asc').then(function(r){
+      setLive(r.filter(function(s){ return s.data_ora && new Date(s.data_ora) > new Date(); }).slice(0,3));
+    });
+  }, []);
+
+  var pct = stats.lezioni ? Math.round(stats.completate / stats.lezioni * 100) : 0;
+
+  return (
+    <div>
+      <div style={{marginBottom:24}}>
+        <div style={{fontSize:'.82rem',color:'var(--text2)'}}>Bentornato,</div>
+        <div style={{fontSize:'1.6rem',fontWeight:800}}>
+          {user.nome} {isAdmin ? '👑' : '⚡'}
+        </div>
+        <div style={{fontSize:'.875rem',color:'var(--text3)',marginTop:3}}>
+          {isAdmin ? 'Gestisci la tua Academy' : 'Continua il tuo percorso verso l'eccellenza'}
+        </div>
+      </div>
+      <div className="g4" style={{marginBottom:22}}>
+        {isAdmin && (
+          <div className="card">
+            <div className="ki" style={{background:'rgba(245,158,11,.12)'}}>👥</div>
+            <div className="kv" style={{color:'var(--gold)'}}>{stats.studenti}</div>
+            <div className="kl">Studenti attivi</div>
+          </div>
+        )}
+        {isAdmin && (
+          <div className="card">
+            <div className="ki" style={{background:'rgba(139,92,246,.12)'}}>🎓</div>
+            <div className="kv" style={{color:'var(--purple)'}}>{stats.istruttori}</div>
+            <div className="kl">Istruttori</div>
+          </div>
+        )}
+        <div className="card">
+          <div className="ki" style={{background:'rgba(6,182,212,.12)'}}>📚</div>
+          <div className="kv" style={{color:'var(--cyan)'}}>{stats.corsi}</div>
+          <div className="kl">Corsi disponibili</div>
+        </div>
+        <div className="card">
+          <div className="ki" style={{background:'rgba(16,185,129,.12)'}}>🎬</div>
+          <div className="kv" style={{color:'var(--green)'}}>{stats.lezioni}</div>
+          <div className="kl">Lezioni totali</div>
+        </div>
+        <div className="card">
+          <div className="ki" style={{background:'rgba(245,158,11,.12)'}}>💬</div>
+          <div className="kv" style={{color:'var(--gold)'}}>{stats.post}</div>
+          <div className="kl">Post community</div>
+        </div>
+        {!isAdmin && (
+          <div className="card">
+            <div className="ki" style={{background:'rgba(16,185,129,.12)'}}>✅</div>
+            <div className="kv" style={{color:'var(--green)'}}>{stats.completate}</div>
+            <div className="kl">Lezioni completate</div>
+          </div>
+        )}
+      </div>
+      <div className="g2">
+        {!isAdmin && (
+          <div className="card">
+            <div style={{fontWeight:700,marginBottom:14}}>📈 Il tuo progresso</div>
+            <div style={{fontSize:'3rem',fontWeight:800,color:'var(--gold)',marginBottom:6}}>{pct}%</div>
+            <div className="pb"><div className="pf" style={{width:pct+'%'}}></div></div>
+            <div style={{fontSize:'.82rem',color:'var(--text2)'}}>{stats.completate} lezioni su {stats.lezioni}</div>
+            <button className="bg bs" style={{marginTop:14}} onClick={function(){ setTab('corsi'); }}>Vai ai corsi →</button>
+          </div>
+        )}
+        <div className="card">
+          <div style={{fontWeight:700,marginBottom:14}}>📅 Prossime live</div>
+          {live.length > 0 ? live.map(function(s) {
+            return (
+              <div key={s.id} style={{display:'flex',alignItems:'center',gap:12,padding:'8px 0',borderBottom:'1px solid var(--border2)'}}>
+                <div style={{fontSize:'1.4rem'}}>🎥</div>
+                <div style={{flex:1}}>
+                  <div style={{fontWeight:600,fontSize:'.875rem'}}>{s.titolo}</div>
+                  <div style={{fontSize:'.72rem',color:'var(--text3)'}}>{fmtDT(s.data_ora)}</div>
+                </div>
+                {s.url_join && <a href={s.url_join} target="_blank" className="bg bs" style={{textDecoration:'none'}}>Entra</a>}
+              </div>
+            );
+          }) : (
+            <div style={{color:'var(--text3)',fontSize:'.82rem'}}>Nessuna live programmata.</div>
+          )}
+        </div>
+        {isAdmin && (
+          <div className="card">
+            <div style={{fontWeight:700,marginBottom:14}}>⚡ Azioni rapide</div>
+            <div style={{display:'flex',flexDirection:'column',gap:8}}>
+              <button className="bg" style={{width:'100%'}} onClick={function(){ setTab('studenti'); }}>+ Aggiungi studente</button>
+              <button className="bgh" style={{width:'100%'}} onClick={function(){ setTab('corsi'); }}>📚 Gestisci corsi</button>
+              <button className="bgh" style={{width:'100%'}} onClick={function(){ setTab('live'); }}>🎥 Programma live</button>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+/* ── TOPBAR ─────────────────────────────────────────── */
+function Topbar(props) {
+  var user = props.user;
+  var isAdmin = user.ruolo === 'admin';
+  var isIstr = user.ruolo === 'istruttore';
+  var roleLabel = isAdmin ? '👑 Manager' : (isIstr ? '🎓 Istruttore' : '🎓 Studente');
+  var roleCls = isAdmin ? 'bgo' : (isIstr ? 'bgp' : 'bgc');
+  return (
+    <div className="topbar">
+      <div style={{fontWeight:700,color:'var(--text2)',fontSize:'.875rem'}}>SalesWorld Academy</div>
+      <div style={{display:'flex',alignItems:'center',gap:10}}>
+        <span className={'bd ' + roleCls}>{roleLabel}</span>
+        <span style={{fontSize:'.855rem',fontWeight:500}}>{user.nome}</span>
+      </div>
+    </div>
+  );
+}
+
+/* ── MAIN VIEWS ─────────────────────────────────────── */
+function MainView(props) {
+  var user = props.user; var onLogout = props.onLogout;
+  var _tab = useState('dashboard'); var tab = _tab[0]; var setTab = _tab[1];
+  var isAdmin = user.ruolo === 'admin';
+
+  function renderTab() {
+    if (tab === 'dashboard') return <Dashboard user={user} setTab={setTab} />;
+    if (tab === 'corsi') return isAdmin ? <AdminCorsi /> : <CorsiView user={user} />;
+    if (tab === 'studenti') return <AdminUtenti user={user} ruolo="studente" />;
+    if (tab === 'istruttori') return <AdminUtenti user={user} ruolo="istruttore" />;
+    if (tab === 'community') return <CommunityView user={user} />;
+    if (tab === 'risorse') return <RisorseView user={user} />;
+    if (tab === 'live') return <LiveView user={user} />;
+    return null;
+  }
+
+  return (
+    <div className="layout">
+      <Sidebar user={user} tab={tab} setTab={setTab} onLogout={onLogout} />
+      <div className="main">
+        <Topbar user={user} />
+        <div className="content">{renderTab()}</div>
+      </div>
+    </div>
+  );
+}
+
+/* ── APP ────────────────────────────────────────────── */
+function App() {
+  var _user = useState(null); var user = _user[0]; var setUser = _user[1];
+
+  function login(u) { setUser(u); }
+  function logout() { setUser(null); }
+
+  if (!user) return <Login onLogin={login} />;
+  return <MainView user={user} onLogout={logout} />;
+}
+
+const root = ReactDOM.createRoot(document.getElementById('root'));
+root.render(<App/>);
+</script>
+</body>
+</html>
