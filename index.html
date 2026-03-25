@@ -545,9 +545,32 @@ function renderCV(corso){
   var tot=lez.length,comp=lez.filter(function(l){return isDone(l.id);}).length,pct=tot?Math.round(comp/tot*100):0;
   var vid=latt?ytId(latt.video_url):null;
   function segnaH(lid){return fn(function(){
-    var user=S('user',{});var pr=S('cv_p',[]);var ex=pr.find(function(p){return p.lezione_id===lid;});
-    var pm=ex?sb('progressi?id=eq.'+ex.id,{method:'PATCH',body:JSON.stringify({completata:true})}):sb('progressi',{method:'POST',body:JSON.stringify({studente_id:user.id,lezione_id:lid,completata:true})});
-    pm.then(function(){sb('progressi?studente_id=eq.'+user.id).then(function(p){set('cv_p',p);});});
+    var user=S('user',{});
+    var pr=S('cv_p',[]);
+    var ex=pr.find(function(p){return p.lezione_id===lid;});
+    var isDoneNow=ex&&ex.completata;
+    // Toggle: se già completata la de-segna, altrimenti la segna
+    var pm;
+    if(isDoneNow){
+      pm=sb('progressi?id=eq.'+ex.id,{method:'PATCH',body:JSON.stringify({completata:false})});
+    } else if(ex){
+      pm=sb('progressi?id=eq.'+ex.id,{method:'PATCH',body:JSON.stringify({completata:true})});
+    } else {
+      pm=sb('progressi',{method:'POST',body:JSON.stringify({studente_id:user.id,lezione_id:lid,completata:true})});
+    }
+    pm.then(function(){
+      sb('progressi?studente_id=eq.'+user.id).then(function(p){
+        set('cv_p',p);
+        // Aggiorna anche il contatore home
+        var done=p.filter(function(x){return x.completata;}).length;
+        set('d_comp',done);
+        // Punti e certificato solo quando si segna (non quando si de-segna)
+        if(!isDoneNow){
+          aggiungiPunti(user.id,10,done===1?'primo_passo':(done>=10?'studioso':null));
+          controllaCertificato(S('corso_aperto',{id:null}).id||'',p.filter(function(x){return x.completata;}),S('cv_l',[]));
+        }
+      });
+    });
   });}
   var mH=mods.map(function(m){
     var lm=lez.filter(function(l){return l.modulo_id===m.id;}),cm=lm.filter(function(l){return isDone(l.id);}).length;
@@ -570,8 +593,8 @@ function renderCV(corso){
     +'</div>';
   }).join('');
   var doneBtn=latt?(isDone(latt.id)
-    ?'<div style="display:inline-flex;align-items:center;gap:5px;color:var(--green);font-weight:700;font-size:.85rem">&#x2705; Completata</div>'
-    :'<button class="btn btn-g btn-sm" data-click="'+segnaH(latt.id)+'">&#x2705; Completata</button>'):'';
+    ?'<button class="btn btn-sm" style="background:rgba(16,185,129,.15);color:var(--green);border:1.5px solid var(--green);display:inline-flex;align-items:center;gap:5px" data-click="'+segnaH(latt.id)+'">&#x2705; Completata &nbsp;<span style="font-size:.7rem;opacity:.7">&#x21BA;</span></button>'
+    :'<button class="btn btn-g btn-sm" data-click="'+segnaH(latt.id)+'">&#x2705; Segna completata</button>'):'';
   return '<div class="page anim cv-layout">'
     +'<div class="cv-progress">'
       +'<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">'
@@ -931,6 +954,10 @@ function render(){
   else if(tab==='risorse')content=renderRisorse();
   else if(tab==='live')content=renderLive();
   else if(tab==='piu')content=renderPiu();
+  else if(tab==='profilo')content=renderProfilo();
+  else if(tab==='analytics')content=renderAnalytics();
+  else if(tab==='search')content=renderSearch();
+  else if(tab==='messaggi')content=renderMessaggi();
   return '<div class="app-wrap">'+renderTopbar()+'<div class="scroll-area">'+content+'</div>'+renderBottomNav()+'</div>'+renderCertPopup();
 }
 
@@ -1236,7 +1263,14 @@ function renderProfilo(){
   var pts=S('d_pts',null);
   var comp=S('d_comp',0);
   var l=S('d_l',null);
-  var pct=l?Math.round(comp/(l||1)*100):0;
+  var pct=(l&&l>0)?Math.round(comp/l*100):0;
+  // Reload fresh data if needed
+  if(pts===null&&user.id){
+    sb('punti_studente?studente_id=eq.'+user.id).then(function(r){if(r&&r.length)set('d_pts',r[0]);else set('d_pts',{punti_totali:0,streak_giorni:0,badge:[]});});
+  }
+  if(!S('my_certs',null)&&user.id){
+    sb('certificati?studente_id=eq.'+user.id+'&order=data_emissione.desc').then(function(r){set('my_certs',r||[]);});
+  }
   var html='<div class="page anim">';
   // Hero
   html+='<div style="text-align:center;padding:20px 0 24px">';
@@ -1378,6 +1412,12 @@ function renderSearch(){
       if((c.titolo||'').toLowerCase().indexOf(low)>=0||(c.descrizione||'').toLowerCase().indexOf(low)>=0)
         res.push({tipo:'corso',id:c.id,titolo:c.titolo,sub:c.istruttore_nome||'Academy',obj:c});
     });
+    // Also search resources
+    var risorse=S('rs_l',null)||[];
+    risorse.forEach(function(r){
+      if((r.titolo||'').toLowerCase().indexOf(low)>=0||(r.descrizione||'').toLowerCase().indexOf(low)>=0)
+        res.push({tipo:'risorsa',id:r.id,titolo:r.titolo,sub:r.tipo||'',obj:r});
+    });
     var lez=S('cv_all_lez',[]);
     lez.forEach(function(l){
       if((l.titolo||'').toLowerCase().indexOf(low)>=0||(l.contenuto||'').toLowerCase().indexOf(low)>=0)
@@ -1402,10 +1442,11 @@ function renderSearch(){
   } else {
     results.forEach(function(r){
       var icoMap={corso:'&#x1F4DA;',lezione:'&#x25B6;&#xFE0F;',risorsa:'&#x1F4C1;'};
-      var clickH=fn(function(){
-        if(r.tipo==='corso'){set('tab','corsi');set('ci_l',null);}
-        else if(r.tipo==='lezione'){set('tab','corsi');}
-      });
+      var clickH=(function(item){return fn(function(){
+        if(item.tipo==='corso'){set('tab','corsi');set('ci_l',null);}
+        else if(item.tipo==='lezione'){set('tab','corsi');}
+        else if(item.tipo==='risorsa'){set('tab','risorse');}
+      });})(r);
       html+='<div class="sr-item" data-click="'+clickH+'"><div style="display:flex;align-items:center;gap:10px"><div style="font-size:1.2rem">'+icoMap[r.tipo]+'</div><div style="flex:1;min-width:0"><div style="font-weight:600;font-size:.9rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(r.titolo)+'</div><div style="font-size:.72rem;color:var(--t3);margin-top:2px"><span class="sr-tag">'+r.tipo+'</span>'+esc(r.sub)+'</div></div></div></div>';
     });
   }
