@@ -92,6 +92,12 @@ html,body{height:100%;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sa
 /* ── COURSE VIEWER ── */
 .cv-progress{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:13px;margin-bottom:12px}
 .vid-wrap{position:relative;padding-bottom:56.25%;height:0;overflow:hidden;border-radius:10px;background:#000}
+.vid-native{width:100%;border-radius:10px;background:#000;display:block;max-height:360px}
+.upload-area{border:2px dashed var(--border);border-radius:11px;padding:18px;text-align:center;cursor:pointer;transition:all .2s;background:rgba(255,255,255,.03)}
+.upload-area:hover,.upload-area.drag{border-color:var(--gold);background:rgba(245,158,11,.06)}
+.upload-area input[type=file]{display:none}
+.upload-progress{height:5px;background:rgba(255,255,255,.08);border-radius:3px;overflow:hidden;margin-top:8px}
+.upload-fill{height:100%;background:var(--grad);border-radius:3px;transition:width .3s;width:0}
 .vid-wrap iframe{position:absolute;top:0;left:0;width:100%;height:100%;border:none}
 .no-vid{height:140px;background:var(--bg2);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:2.8rem;margin-bottom:12px}
 .mod-block{margin-bottom:3px}
@@ -246,6 +252,39 @@ function fn(f){var id='e'+(++_hc);_h[id]=f;return id;}
 
 // ── Utils ──────────────────────────────────
 function ytId(u){if(!u)return null;var m=u.match(/(?:youtube\.com\/(?:watch\?v=|embed\/)|youtu\.be\/)([^&\n?#]+)/);return m?m[1]:null;}
+function isYT(u){return !!ytId(u);}
+function isStorageUrl(u){return u&&(u.indexOf('/storage/v1/object')>-1||u.indexOf('supabase.co/storage')>-1);}
+function renderVideoPlayer(url,style){
+  style=style||'';
+  if(!url)return '<div class="no-vid">&#x1F3AC;</div>';
+  var yt=ytId(url);
+  if(yt)return '<div class="vid-wrap"'+style+'><iframe src="https://www.youtube.com/embed/'+yt+'?rel=0" allowfullscreen></iframe></div>';
+  return '<div style="margin-bottom:12px"><video class="vid-native" controls controlsList="nodownload" preload="metadata"><source src="'+esc(url)+'"><p style="color:var(--t3);padding:20px">Video non supportato.</p></video></div>';
+}
+window.uploadVideoFile=function(file,onProgress,onDone,onError){
+  if(!file)return;
+  var ext=file.name.split('.').pop().toLowerCase();
+  var allowed=['mp4','mov','webm','m4v','avi'];
+  if(allowed.indexOf(ext)<0){onError&&onError("Formato non supportato. Usa MP4, MOV o WEBM.");return;}
+  if(file.size>500*1024*1024){onError&&onError("File troppo grande. Max 500MB.");return;}
+  var fname='video_'+Date.now()+'_'+Math.random().toString(36).slice(2)+'.'+ext;
+  var url=SBU+'/storage/v1/object/academy-videos/'+fname;
+  var xhr=new XMLHttpRequest();
+  xhr.open('POST',url);
+  xhr.setRequestHeader('apikey',SBK);
+  xhr.setRequestHeader('Authorization','Bearer '+SBK);
+  xhr.setRequestHeader('Content-Type',file.type||'video/mp4');
+  xhr.setRequestHeader('x-upsert','true');
+  xhr.upload.onprogress=function(e){if(e.lengthComputable&&onProgress)onProgress(Math.round(e.loaded/e.total*100));};
+  xhr.onload=function(){
+    if(xhr.status===200||xhr.status===201){
+      var publicUrl=SBU+'/storage/v1/object/public/academy-videos/'+fname;
+      onDone&&onDone(publicUrl);
+    }else{onError&&onError("Errore upload ("+xhr.status+"). Controlla il bucket Supabase.");}
+  };
+  xhr.onerror=function(){onError&&onError('Errore di rete.');};
+  xhr.send(file);
+};
 function ini(n){if(!n)return'?';return n.split(' ').map(function(w){return w[0];}).join('').toUpperCase().slice(0,2);}
 function fmtD(ts){if(!ts)return'-';return new Date(ts).toLocaleDateString('it-IT',{day:'2-digit',month:'short'});}
 function fmtDT(ts){if(!ts)return'-';return new Date(ts).toLocaleString('it-IT',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'});}
@@ -506,7 +545,7 @@ function renderCV(corso){
     +'</div>'
     +'<div class="cv-main">'
       +(latt?'<div class="section-card">'
-        +(vid?'<div class="vid-wrap"><iframe src="https://www.youtube.com/embed/'+vid+'?rel=0" allowfullscreen></iframe></div>':'<div class="no-vid">&#x1F3AC;</div>')
+        +renderVideoPlayer(latt.video_url)
         +'<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-top:14px">'
           +'<div><div style="font-weight:700;font-size:1rem;margin-bottom:4px">'+esc(latt.titolo)+'</div>'+(latt.durata_minuti>0?'<div style="font-size:.76rem;color:var(--t2)">&#x23F1; '+latt.durata_minuti+' min</div>':'')+'</div>'
           +doneBtn
@@ -613,7 +652,29 @@ function renderAdminCorsi(){
     var el2=S('ac_el',null),lv2=el2?ytId(el2.video_url):null;
     var sH3=fn(function(){var t=rv('al_t');if(!t||!msel||!csel)return;var data={titolo:t,video_url:rv('al_v'),contenuto:rv('al_c'),durata_minuti:parseInt(rv('al_d'))||0,ordine:parseInt(rv('al_o'))||0};var p=el2?sb('lezioni?id=eq.'+el2.id,{method:'PATCH',body:JSON.stringify(data)}):sb('lezioni',{method:'POST',body:JSON.stringify(Object.assign({},data,{modulo_id:msel.id,corso_id:csel.id}))});p.then(function(){set('ac_showl',false);sb('lezioni?modulo_id=eq.'+msel.id+'&order=ordine.asc').then(function(r){set('ac_l',r);});});});
     var cx3=fn(function(){set('ac_showl',false);});
-    modals+='<div class="modal-ov" onclick="if(event.target===this)set(\'ac_showl\',false)"><div class="modal-box">'+mX(cx3)+'<div class="modal-title">&#x1F3AC; '+(el2?'Modifica':'Nuova lezione')+'</div>'+lbl('Titolo *',inp('al_t','Titolo lezione','text',el2?el2.titolo:''))+lbl('URL Video YouTube',inp('al_v','https://youtube.com/watch?v=...','text',el2?el2.video_url||'':''))+(lv2?'<div class="vid-wrap" style="margin-bottom:14px"><iframe src="https://www.youtube.com/embed/'+lv2+'" allowfullscreen></iframe></div>':'')+lbl('Note',ta('al_c','Note sulla lezione',el2?el2.contenuto||'':''))+'<div class="g2f">'+lbl('Durata (min)',inp('al_d','','number',String(el2?el2.durata_minuti||0:0)))+lbl('Ordine',inp('al_o','','number',String(el2?el2.ordine||0:0)))+'</div><button class="btn btn-g btn-full" style="margin-top:8px" data-click="'+sH3+'">&#x1F4BE; Salva</button></div></div>';
+    modals+='<div class="modal-ov" onclick="if(event.target===this)set(\'ac_showl\',false)"><div class="modal-box">'+mX(cx3)+'<div class="modal-title">&#x1F3AC; '+(el2?'Modifica':'Nuova lezione')+'</div>'+lbl('Titolo *',inp('al_t','Titolo lezione','text',el2?el2.titolo:''))+lbl('Video',
+  '<div style="margin-bottom:8px">'
+  +'<div style="display:flex;gap:6px;margin-bottom:10px">'
+  +'<button type="button" id="vtab_yt" onclick="window._switchVideoTab(this,true)" class="btn btn-g btn-xs">&#x25B6; YouTube</button>'
+  +'<button type="button" id="vtab_up" onclick="window._switchVideoTab(this,false)" class="btn btn-gh btn-xs">&#x1F4F1; Carica video</button>'
+  +'</div>'
+  +'<div id="vblock_yt">'
+  +inp('al_v','https://youtube.com/watch?v=...','text',el2?el2.video_url||'':'')
+  +'</div>'
+  +'<div id="vblock_up" style="display:none">'
+  +'<div class="upload-area" id="drop_zone" onclick="document.getElementById(\"al_vfile\").click()" '
+  +'ondragover="event.preventDefault();this.classList.add(\"drag\")" '
+  +'ondragleave="this.classList.remove(\"drag\")" '
+  +'ondrop="event.preventDefault();this.classList.remove(\"drag\');window._handleVideoDrop(event)">'
+  +'<input type="file" id="al_vfile" accept="video/mp4,video/quicktime,video/webm,video/*" onchange="window._handleVideoFile(this.files[0])">'
+  +'<div id="up_icon" style="font-size:1.8rem;margin-bottom:6px">&#x1F4F9;</div>'
+  +'<div id="up_label" style="font-size:.82rem;color:var(--t2)">Tocca per scegliere o trascina il video qui<br><span style="font-size:.72rem;color:var(--t3)">MP4 · MOV · WEBM · max 500MB</span></div>'
+  +'<div class="upload-progress" id="up_prog" style="display:none"><div class="upload-fill" id="up_fill"></div></div>'
+  +'</div>'
+  +'<div id="up_status" style="font-size:.78rem;margin-top:6px;color:var(--t2)"></div>'
+  +'</div>'
+  +'</div>')
+  +((el2&&el2.video_url)?('<div style="margin-top:10px">'+renderVideoPlayer(el2.video_url)+('</div>')):'')+lbl('Note',ta('al_c','Note sulla lezione',el2?el2.contenuto||'':''))+'<div class="g2f">'+lbl('Durata (min)',inp('al_d','','number',String(el2?el2.durata_minuti||0:0)))+lbl('Ordine',inp('al_o','','number',String(el2?el2.ordine||0:0)))+'</div><button class="btn btn-g btn-full" style="margin-top:8px" data-click="'+sH3+'">&#x1F4BE; Salva</button></div></div>';
   }
   return html+'</div>'+modals;
 }
@@ -840,6 +901,55 @@ _root=document.getElementById('app');
 draw();
 })();
 
+
+window._switchVideoTab=function(btn,isYt){
+  var ytBlock=document.getElementById('vblock_yt');
+  var upBlock=document.getElementById('vblock_up');
+  var ytBtn=document.getElementById('vtab_yt');
+  var upBtn=document.getElementById('vtab_up');
+  if(!ytBlock||!upBlock)return;
+  if(isYt){
+    ytBlock.style.display='';upBlock.style.display='none';
+    ytBtn.className='btn btn-g btn-xs';upBtn.className='btn btn-gh btn-xs';
+  }else{
+    ytBlock.style.display='none';upBlock.style.display='';
+    ytBtn.className='btn btn-gh btn-xs';upBtn.className='btn btn-g btn-xs';
+  }
+};
+window._handleVideoFile=function(file){
+  if(!file)return;
+  var zone=document.getElementById('drop_zone');
+  var icon=document.getElementById('up_icon');
+  var lbl=document.getElementById('up_label');
+  var prog=document.getElementById('up_prog');
+  var fill=document.getElementById('up_fill');
+  var status=document.getElementById('up_status');
+  var urlField=document.getElementById('al_v');
+  if(prog)prog.style.display='block';
+  if(lbl)lbl.textContent='Caricamento in corso...';
+  if(icon)icon.textContent='\u23F3';
+  if(status)status.textContent='';
+  window.uploadVideoFile(file,
+    function(pct){if(fill)fill.style.width=pct+'%';if(lbl)lbl.textContent='Caricamento: '+pct+'%';},
+    function(url){
+      if(fill)fill.style.width='100%';
+      if(icon)icon.textContent='\u2705';
+      if(lbl)lbl.innerHTML='<b>Video caricato!</b><br><span style="color:var(--t3);font-size:.7rem">'+file.name+'</span>';
+      if(status)status.innerHTML='<span style="color:var(--green)">\u2705 Upload completato — il video verr\u00e0 salvato con la lezione</span>';
+      if(urlField)urlField.value=url;
+    },
+    function(err){
+      if(icon)icon.textContent='\u274C';
+      if(lbl)lbl.textContent='Tocca per riprovare';
+      if(status)status.innerHTML='<span style="color:var(--red)">\u274C '+err+'</span>';
+      if(prog)prog.style.display='none';
+    }
+  );
+};
+window._handleVideoDrop=function(e){
+  var f=e.dataTransfer.files[0];
+  if(f)window._handleVideoFile(f);
+};
 </script>
 </body>
 </html>
