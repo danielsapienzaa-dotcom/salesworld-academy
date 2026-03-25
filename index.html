@@ -212,6 +212,39 @@ select.fi{cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xmlns='
 @keyframes slideUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
 .anim{animation:slideUp .2s ease-out}
 
+
+/* ── QUIZ ── */
+.quiz-opt{width:100%;padding:11px 14px;background:rgba(255,255,255,.05);border:1.5px solid var(--border);border-radius:11px;color:var(--text);font-family:inherit;font-size:.88rem;cursor:pointer;text-align:left;transition:all .18s;margin-bottom:8px;display:block}
+.quiz-opt:active{transform:scale(.98)}
+.quiz-opt.correct{background:rgba(16,185,129,.15);border-color:var(--green);color:var(--green)}
+.quiz-opt.wrong{background:rgba(239,68,68,.12);border-color:var(--red);color:var(--red)}
+.quiz-opt.disabled{opacity:.6;cursor:not-allowed}
+/* ── NOTE ── */
+.note-area{width:100%;min-height:80px;padding:11px 13px;background:rgba(245,158,11,.04);border:1.5px solid rgba(245,158,11,.2);border-radius:11px;font-size:.86rem;color:var(--text);font-family:inherit;resize:vertical;outline:none;transition:border-color .2s}
+.note-area:focus{border-color:rgba(245,158,11,.5)}
+/* ── COMMENTI LEZIONE ── */
+.cl-item{display:flex;gap:9px;margin-bottom:10px}
+.cl-bubble{background:var(--bg3);border-radius:11px;padding:10px 13px;flex:1;min-width:0}
+/* ── PROFILO ── */
+.prof-stat{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:14px;text-align:center;flex:1}
+.badge-chip{display:inline-flex;flex-direction:column;align-items:center;gap:4px;background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.2);border-radius:12px;padding:10px 14px;margin:4px}
+/* ── ANALYTICS ── */
+.stat-row{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border)}
+.stat-row:last-child{border-bottom:none}
+.prog-bar-sm{height:5px;background:rgba(255,255,255,.07);border-radius:3px;overflow:hidden;flex:1}
+.prog-fill-sm{height:100%;border-radius:3px;background:var(--grad);transition:width .6s}
+/* ── MESSAGGI ── */
+.msg-bubble{max-width:80%;padding:10px 14px;border-radius:14px;font-size:.87rem;line-height:1.6;margin-bottom:8px;word-break:break-word}
+.msg-bubble.out{background:rgba(245,158,11,.18);margin-left:auto;border-bottom-right-radius:4px}
+.msg-bubble.in{background:var(--bg3);margin-right:auto;border-bottom-left-radius:4px}
+/* ── SEARCH ── */
+.sr-item{padding:11px 14px;border-radius:11px;background:var(--card);border:1px solid var(--border);margin-bottom:8px;cursor:pointer;transition:all .18s}
+.sr-item:active{border-color:rgba(245,158,11,.3)}
+.sr-tag{font-size:.65rem;font-weight:700;padding:2px 7px;border-radius:20px;background:rgba(245,158,11,.15);color:var(--gold);margin-right:5px}
+/* ── LEADERBOARD ── */
+.lb-row{display:flex;align-items:center;gap:11px;padding:10px 12px;border-radius:12px;margin-bottom:6px}
+.lb-rank{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:.82rem;flex-shrink:0}
+
 @media(min-width:600px){
   .modal-ov{align-items:center}
   .modal-box{border-radius:20px;max-width:480px}
@@ -341,7 +374,11 @@ function loadAll(){
   sb('lezioni').then(function(r){set('d_l',r.length);});
   sb('community_posts').then(function(r){set('d_p',r.length);});
   sb('live_sessioni?order=data_ora.asc').then(function(r){var now=new Date();set('d_live',r.filter(function(s){return s.data_ora&&new Date(s.data_ora)>now;}).slice(0,5));});
-  if(!isA&&user.id)sb('progressi?studente_id=eq.'+user.id+'&completata=eq.true').then(function(r){set('d_comp',r.length);});
+  if(!isA&&user.id){
+    sb('progressi?studente_id=eq.'+user.id+'&completata=eq.true').then(function(r){set('d_comp',r.length);});
+    sb('punti_studente?studente_id=eq.'+user.id).then(function(r){if(r&&r.length)set('d_pts',r[0]);});
+    aggiornaPunti(user.id);
+  }
 }
 
 // ── BOTTOM NAV ─────────────────────────────
@@ -349,7 +386,7 @@ function renderBottomNav(){
   var user=S('user',{}),tab=S('tab','home'),isA=user.ruolo==='admin';
   var items=isA
     ?[['home','&#x1F4CA;','Home'],['studenti','&#x1F465;','Utenti'],['corsi','&#x1F4DA;','Corsi'],['community','&#x1F4AC;','Community'],['piu','&#x22EF;','Altro']]
-    :[['home','&#x1F3E0;','Home'],['corsi','&#x1F4DA;','Corsi'],['community','&#x1F4AC;','Community'],['risorse','&#x1F4C1;','Risorse'],['live','&#x1F3A5;','Live']];
+    :[['home','&#x1F3E0;','Home'],['corsi','&#x1F4DA;','Corsi'],['community','&#x1F4AC;','Chat'],['search','&#x1F50D;','Cerca'],['profilo','&#x1F464;','Profilo']];
   var html=items.map(function(it){
     var isAct=tab===it[0]||(tab==='istruttori'&&it[0]==='studenti');
     var h=fn(function(){set('tab',it[0]);set('stack',[]);set('corso_aperto',null);});
@@ -894,7 +931,7 @@ function render(){
   else if(tab==='risorse')content=renderRisorse();
   else if(tab==='live')content=renderLive();
   else if(tab==='piu')content=renderPiu();
-  return '<div class="app-wrap">'+renderTopbar()+'<div class="scroll-area">'+content+'</div>'+renderBottomNav()+'</div>';
+  return '<div class="app-wrap">'+renderTopbar()+'<div class="scroll-area">'+content+'</div>'+renderBottomNav()+'</div>'+renderCertPopup();
 }
 
 _root=document.getElementById('app');
@@ -950,6 +987,643 @@ window._handleVideoDrop=function(e){
   var f=e.dataTransfer.files[0];
   if(f)window._handleVideoFile(f);
 };
+
+// ═══════════════════════════════════════════════════════
+// GAMIFICATION
+// ═══════════════════════════════════════════════════════
+var BADGES={
+  primo_passo:{emoji:'&#x1F331;',nome:'Primo Passo',desc:'Prima lezione completata'},
+  studioso:{emoji:'&#x1F4DA;',nome:'Studioso',desc:'10 lezioni completate'},
+  dedicato:{emoji:'&#x1F3C6;',nome:'Dedicato',desc:'Primo corso completato'},
+  costante:{emoji:'&#x1F525;',nome:'Costante',desc:'7 giorni di studio consecutivi'},
+  esperto:{emoji:'&#x1F4AA;',nome:'Esperto',desc:'3 corsi completati'},
+  social:{emoji:'&#x1F4AC;',nome:'Social',desc:'Primo post in community'},
+};
+function aggiornaPunti(uid){
+  if(!uid)return;
+  sb('punti_studente?studente_id=eq.'+uid).then(function(rows){
+    var oggi=new Date().toISOString().slice(0,10);
+    if(!rows||!rows.length){
+      sb('punti_studente',{method:'POST',body:JSON.stringify({studente_id:uid,punti_totali:5,streak_giorni:1,ultimo_studio:oggi,badge:['primo_passo']})}).then(function(r){if(r&&r.length)set('d_pts',r[0]);});
+      return;
+    }
+    var p=rows[0];
+    var streak=p.streak_giorni||0;
+    var ieri=new Date();ieri.setDate(ieri.getDate()-1);var ieriS=ieri.toISOString().slice(0,10);
+    if(p.ultimo_studio===oggi)return;
+    if(p.ultimo_studio===ieriS)streak++;else streak=1;
+    var badges=p.badge||[];
+    if(streak>=7&&badges.indexOf('costante')<0)badges.push('costante');
+    sb('punti_studente?studente_id=eq.'+uid,{method:'PATCH',body:JSON.stringify({streak_giorni:streak,ultimo_studio:oggi,badge:badges})}).then(function(r){if(r&&r.length)set('d_pts',r[0]);});
+  });
+}
+function aggiungiPunti(uid,pt,badgeKey){
+  if(!uid)return;
+  sb('punti_studente?studente_id=eq.'+uid).then(function(rows){
+    if(!rows||!rows.length){aggiornaPunti(uid);return;}
+    var p=rows[0];
+    var nuovi=(p.punti_totali||0)+pt;
+    var badges=p.badge||[];
+    if(badgeKey&&badges.indexOf(badgeKey)<0)badges.push(badgeKey);
+    sb('punti_studente?studente_id=eq.'+uid,{method:'PATCH',body:JSON.stringify({punti_totali:nuovi,badge:badges})}).then(function(r){if(r&&r.length)set('d_pts',r[0]);});
+  });
+}
+
+// ═══════════════════════════════════════════════════════
+// CERTIFICATI (jsPDF client-side — gratuito)
+// ═══════════════════════════════════════════════════════
+function generaCertificatoPDF(nomeStudente,titoloCorso,emojiCorso,codice,dataStr){
+  if(!window.jspdf){alert('jsPDF non caricato. Ricarica la pagina.');return;}
+  var doc=new window.jspdf.jsPDF({orientation:'landscape',unit:'mm',format:'a4'});
+  var W=297,H=210;
+  // sfondo
+  doc.setFillColor(7,7,15); doc.rect(0,0,W,H,'F');
+  // bordo doppio oro
+  doc.setDrawColor(217,119,6); doc.setLineWidth(2.5); doc.rect(8,8,W-16,H-16);
+  doc.setLineWidth(0.8); doc.rect(11,11,W-22,H-22);
+  // angoli decorativi
+  var corners=[[11,11],[W-11,11],[11,H-11],[W-11,H-11]];
+  corners.forEach(function(c){
+    doc.setFillColor(217,119,6);
+    doc.circle(c[0],c[1],2,'F');
+  });
+  // logo/emoji corso (approssimato)
+  doc.setFontSize(32); doc.setTextColor(245,158,11);
+  doc.text(emojiCorso||'🏆',W/2,40,{align:'center'});
+  // titolo
+  doc.setFontSize(11); doc.setTextColor(148,163,184);
+  doc.setFont('helvetica','normal');
+  doc.text('SALESWORLD ACADEMY',W/2,55,{align:'center'});
+  doc.setDrawColor(245,158,11); doc.setLineWidth(0.5);
+  doc.line(80,58,W-80,58);
+  // testo principale
+  doc.setFontSize(22); doc.setTextColor(241,245,249);
+  doc.setFont('helvetica','bold');
+  doc.text('CERTIFICATO DI COMPLETAMENTO',W/2,72,{align:'center'});
+  doc.setFontSize(10); doc.setFont('helvetica','normal'); doc.setTextColor(148,163,184);
+  doc.text('Si certifica che',W/2,84,{align:'center'});
+  // nome studente
+  doc.setFontSize(28); doc.setFont('helvetica','bold'); doc.setTextColor(245,158,11);
+  doc.text(nomeStudente,W/2,98,{align:'center'});
+  // corso
+  doc.setFontSize(10); doc.setFont('helvetica','normal'); doc.setTextColor(148,163,184);
+  doc.text('ha completato con successo il corso',W/2,110,{align:'center'});
+  doc.setFontSize(18); doc.setFont('helvetica','bold'); doc.setTextColor(241,245,249);
+  doc.text(titoloCorso,W/2,122,{align:'center',maxWidth:220});
+  // data e codice
+  doc.setDrawColor(245,158,11); doc.setLineWidth(0.3);
+  doc.line(80,132,W-80,132);
+  doc.setFontSize(9); doc.setFont('helvetica','normal'); doc.setTextColor(100,120,140);
+  doc.text('Data di emissione: '+dataStr,W/2-50,140,{align:'center'});
+  doc.text('Cod. verifica: '+codice,W/2+50,140,{align:'center'});
+  // firma
+  doc.setFontSize(10); doc.setTextColor(245,158,11);
+  doc.text('Manager SalesWorld',W/2,158,{align:'center'});
+  doc.setLineWidth(0.5); doc.line(W/2-40,152,W/2+40,152);
+  doc.setFontSize(8); doc.setTextColor(100,120,140);
+  doc.text('SalesWorld Academy · salesworld-academy.vercel.app',W/2,168,{align:'center'});
+  doc.save('Certificato_'+titoloCorso.replace(/\s+/g,'_')+'_'+nomeStudente.replace(/\s+/g,'_')+'.pdf');
+}
+
+function controllaCertificato(corsoId,lezioni,prog){
+  var user=S('user',{});
+  if(!user.id||user.ruolo==='admin')return;
+  var done=lezioni.filter(function(l){return prog.some(function(p){return p.lezione_id===l.id&&p.completata;});});
+  if(done.length<lezioni.length||!lezioni.length)return;
+  // Corso completato → emetti certificato se non esiste
+  sb('corsi?id=eq.'+corsoId).then(function(cr){
+    if(!cr||!cr.length)return;
+    var corso=cr[0];
+    sb('certificati?studente_id=eq.'+user.id+'&corso_id=eq.'+corsoId).then(function(ex){
+      if(ex&&ex.length){set('cert_just',null);return;}
+      var oggi=new Date().toLocaleDateString('it-IT');
+      sb('certificati',{method:'POST',body:JSON.stringify({studente_id:user.id,studente_nome:user.nome,corso_id:corsoId,corso_titolo:corso.titolo,data_emissione:new Date().toISOString()})}).then(function(r){
+        if(r&&r.length){
+          set('cert_just',{corso:corso,cert:r[0]});
+          aggiungiPunti(user.id,100,'dedicato');
+        }
+      });
+    });
+  });
+}
+
+// ═══════════════════════════════════════════════════════
+// QUIZ
+// ═══════════════════════════════════════════════════════
+function loadQuiz(lezId){
+  sb('quiz?lezione_id=eq.'+lezId+'&order=ordine.asc').then(function(r){set('qz_list_'+lezId,r||[]);});
+  var user=S('user',{});
+  if(user.id)sb('quiz_risposte?studente_id=eq.'+user.id).then(function(r){set('qz_risp',r||[]);});
+}
+function renderQuiz(lezId){
+  var qs=S('qz_list_'+lezId,null);
+  if(qs===null){loadQuiz(lezId);return '<div style="color:var(--t3);font-size:.84rem;padding:12px 0">Caricamento quiz...</div>';}
+  if(!qs.length)return '<div style="color:var(--t3);font-size:.82rem;padding:12px 0">Nessun quiz per questa lezione.</div>';
+  var risps=S('qz_risp',[]);
+  var html='';
+  qs.forEach(function(q,qi){
+    var ans=risps.find(function(r){return r.quiz_id===q.id;});
+    var opzioni=q.opzioni||[];
+    html+='<div style="background:var(--bg2);border:1px solid var(--border);border-radius:13px;padding:14px;margin-bottom:10px">';
+    html+='<div style="font-weight:700;font-size:.9rem;margin-bottom:10px;line-height:1.4">'+(qi+1)+'. '+esc(q.domanda)+'</div>';
+    opzioni.forEach(function(op,oi){
+      var cls='quiz-opt';
+      if(ans!==undefined){
+        cls+=' disabled';
+        if(op.corretto)cls+=' correct';
+        else if(ans.risposta_idx===oi&&!op.corretto)cls+=' wrong';
+      }
+      var h=ans?'':fn(function(idx){return function(){
+        var user=S('user',{});
+        if(!user.id)return;
+        var corretto=!!opzioni[idx].corretto;
+        sb('quiz_risposte',{method:'POST',body:JSON.stringify({studente_id:user.id,quiz_id:q.id,risposta_idx:idx,corretta:corretto})}).then(function(){
+          sb('quiz_risposte?studente_id=eq.'+user.id).then(function(r){set('qz_risp',r||[]);});
+          if(corretto)aggiungiPunti(user.id,5,null);
+        });
+      };}(oi));
+      html+='<button class="'+cls+'"'+(h?(' data-click="'+h+'"'):'')+'>'+(ans&&op.corretto?'✅ ':ans&&ans.risposta_idx===oi&&!op.corretto?'❌ ':'○ ')+esc(op.testo)+'</button>';
+    });
+    if(ans){
+      html+='<div style="font-size:.78rem;margin-top:6px;color:'+(ans.corretta?'var(--green)':'var(--red)') + '">'+(ans.corretta?'✅ Corretto! +5 punti':'❌ Risposta errata — rileggi la lezione')+'</div>';
+    }
+    html+='</div>';
+  });
+  return html;
+}
+// Admin: gestione quiz
+function renderAdminQuiz(lezId){
+  var qs=S('qz_list_'+lezId,null);
+  if(qs===null){loadQuiz(lezId);return '<div style="color:var(--t3);font-size:.82rem">Caricamento...</div>';}
+  var nH=fn(function(){set('qz_new_'+lezId,{domanda:'',opzioni:[{testo:'',corretto:true},{testo:'',corretto:false},{testo:'',corretto:false},{testo:'',corretto:false}]});set('qz_show_'+lezId,true);});
+  var html='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px"><div style="font-weight:700;font-size:.88rem">&#x2753; Quiz ('+qs.length+')</div><button class="btn btn-gh btn-xs" data-click="'+nH+'">+ Aggiungi domanda</button></div>';
+  qs.forEach(function(q){
+    var dH=fn(function(){if(!confirm('Eliminare domanda?'))return;sb('quiz?id=eq.'+q.id,{method:'DELETE'}).then(function(){loadQuiz(lezId);});});
+    html+='<div style="background:var(--bg2);border-radius:10px;padding:10px 12px;margin-bottom:6px;display:flex;justify-content:space-between;align-items:flex-start;gap:8px"><div style="font-size:.84rem;flex:1">'+esc(q.domanda)+'</div><button class="ic-btn red" style="flex-shrink:0" data-click="'+dH+'">&#x1F5D1;</button></div>';
+  });
+  if(S('qz_show_'+lezId,false)){
+    var q2=S('qz_new_'+lezId,{domanda:'',opzioni:[{testo:'',corretto:true},{testo:'',corretto:false},{testo:'',corretto:false},{testo:'',corretto:false}]});
+    var sH=fn(function(){
+      var dom=document.getElementById('qz_dom_'+lezId);
+      if(!dom||!dom.value.trim())return;
+      var ops=[];
+      for(var i=0;i<4;i++){
+        var t=document.getElementById('qz_op'+i+'_'+lezId);
+        var c=document.getElementById('qz_ck'+i+'_'+lezId);
+        if(t&&t.value.trim())ops.push({testo:t.value.trim(),corretto:c?c.checked:i===0});
+      }
+      if(ops.length<2)return;
+      sb('quiz',{method:'POST',body:JSON.stringify({lezione_id:lezId,domanda:dom.value.trim(),opzioni:ops,ordine:qs.length})}).then(function(){set('qz_show_'+lezId,false);loadQuiz(lezId);});
+    });
+    var cx=fn(function(){set('qz_show_'+lezId,false);});
+    html+='<div style="background:var(--bg2);border-radius:12px;padding:14px;margin-top:8px"><div style="font-weight:700;margin-bottom:10px">Nuova domanda</div>';
+    html+='<input id="qz_dom_'+lezId+'" class="fi" placeholder="Scrivi la domanda..." style="margin-bottom:10px">';
+    for(var i=0;i<4;i++){
+      html+='<div style="display:flex;align-items:center;gap:8px;margin-bottom:7px"><input type="checkbox" id="qz_ck'+i+'_'+lezId+'"'+(i===0?' checked':'')+' style="width:18px;height:18px;accent-color:var(--gold)"><input id="qz_op'+i+'_'+lezId+'" class="fi" style="flex:1" placeholder="Opzione '+(i+1)+'"></div>';
+    }
+    html+='<div style="font-size:.74rem;color:var(--t3);margin-bottom:10px">&#x2714; = risposta corretta (almeno 2 opzioni)</div>';
+    html+='<div style="display:flex;gap:8px"><button class="btn btn-g btn-sm" data-click="'+sH+'">Salva</button><button class="btn btn-gh btn-sm" data-click="'+cx+'">Annulla</button></div></div>';
+  }
+  return html;
+}
+
+// ═══════════════════════════════════════════════════════
+// COMMENTI LEZIONE (moderati)
+// ═══════════════════════════════════════════════════════
+function loadCommenti(lezId){
+  sb('commenti_lezioni?lezione_id=eq.'+lezId+'&visibile=eq.true&order=created_at.asc').then(function(r){set('cl_'+lezId,r||[]);});
+}
+function renderCommentiLezione(lezId){
+  var user=S('user',{});
+  var isA=user.ruolo==='admin';
+  var lista=S('cl_'+lezId,null);
+  if(lista===null){loadCommenti(lezId);return '<div style="color:var(--t3);font-size:.82rem">Caricamento...</div>';}
+  var pubH=fn(function(){
+    var t=document.getElementById('cl_new_'+lezId);
+    if(!t||!t.value.trim())return;
+    var testo=t.value.trim();
+    if(testo.length>500){alert('Max 500 caratteri.');return;}
+    sb('commenti_lezioni',{method:'POST',body:JSON.stringify({lezione_id:lezId,autore_id:user.id,autore_nome:user.nome,autore_ruolo:user.ruolo,contenuto:testo,visibile:true})}).then(function(){t.value='';loadCommenti(lezId);aggiungiPunti(user.id,2,null);});
+  });
+  var html='';
+  lista.forEach(function(c){
+    var dH=isA?fn(function(){sb('commenti_lezioni?id=eq.'+c.id,{method:'PATCH',body:JSON.stringify({visibile:false})}).then(function(){loadCommenti(lezId);});}):null;
+    var isI=c.autore_ruolo==='istruttore'||c.autore_ruolo==='admin';
+    html+='<div class="cl-item"><div style="flex-shrink:0;width:30px;height:30px;border-radius:8px;background:linear-gradient(135deg,'+(isI?'#F59E0B,#D97706':'#374151,#1F2937')+');display:flex;align-items:center;justify-content:center;font-size:.65rem;font-weight:700;color:#fff">'+(c.autore_nome||'?').slice(0,2).toUpperCase()+'</div>';
+    html+='<div class="cl-bubble"><div style="display:flex;align-items:center;gap:6px;margin-bottom:4px"><span style="font-weight:700;font-size:.8rem">'+(isI?'<span style="color:var(--gold)">'+esc(c.autore_nome)+'</span>':esc(c.autore_nome))+'</span>'+ago(c.created_at)+'</div>';
+    html+='<div style="font-size:.86rem;line-height:1.6;word-break:break-word">'+esc(c.contenuto)+'</div></div>';
+    if(isA)html+='<button class="ic-btn red" style="flex-shrink:0;width:26px;height:26px;margin-top:2px" data-click="'+dH+'">&#x1F6AB;</button>';
+    html+='</div>';
+  });
+  if(!lista.length)html+='<div style="color:var(--t3);font-size:.82rem;padding:8px 0">Nessun commento ancora. Fai la prima domanda!</div>';
+  html+='<div style="display:flex;gap:8px;margin-top:10px"><input id="cl_new_'+lezId+'" class="fi" style="flex:1;font-size:.84rem" placeholder="Scrivi una domanda o commento (max 500 car.)..." maxlength="500"><button class="btn btn-g btn-sm" style="flex-shrink:0" data-click="'+pubH+'">&#x27A4;</button></div>';
+  return html;
+}
+
+// ═══════════════════════════════════════════════════════
+// NOTE PRIVATE
+// ═══════════════════════════════════════════════════════
+var _noteTimer={};
+function renderNotePrivate(lezId){
+  var user=S('user',{});
+  var nota=S('nota_'+lezId,null);
+  if(nota===null){
+    set('nota_'+lezId,'');
+    sb('note_lezioni?studente_id=eq.'+user.id+'&lezione_id=eq.'+lezId).then(function(r){set('nota_'+lezId,r&&r.length?r[0].contenuto:'');});
+  }
+  var saveH=fn(function(){
+    var t=document.getElementById('note_ta_'+lezId);
+    if(!t)return;
+    clearTimeout(_noteTimer[lezId]);
+    _noteTimer[lezId]=setTimeout(function(){
+      var val=t.value;
+      set('nota_'+lezId,val);
+      sb('note_lezioni?studente_id=eq.'+user.id+'&lezione_id=eq.'+lezId).then(function(ex){
+        var data={studente_id:user.id,lezione_id:lezId,contenuto:val,updated_at:new Date().toISOString()};
+        var p=ex&&ex.length?sb('note_lezioni?id=eq.'+ex[0].id,{method:'PATCH',body:JSON.stringify(data)}):sb('note_lezioni',{method:'POST',body:JSON.stringify(data)});
+        p.then(function(){var el=document.getElementById('note_saved_'+lezId);if(el){el.style.opacity='1';setTimeout(function(){el.style.opacity='0';},2000);}});
+      });
+    },800);
+  });
+  return '<div style="position:relative"><textarea id="note_ta_'+lezId+'" class="note-area" placeholder="&#x270D; Le tue note private su questa lezione — solo tu le vedi..." oninput="void 0" data-change="'+saveH+'">'+esc(nota||'')+'</textarea><div id="note_saved_'+lezId+'" style="position:absolute;bottom:8px;right:10px;font-size:.68rem;color:var(--green);opacity:0;transition:opacity .3s">&#x2713; Salvato</div></div>';
+}
+
+// ═══════════════════════════════════════════════════════
+// EXTRA TAB in lesson viewer (Quiz / Commenti / Note)
+// ═══════════════════════════════════════════════════════
+function renderLezExtras(latt,activeTab){
+  var user=S('user',{});
+  var isA=user.ruolo==='admin';
+  var tabs=[['note','&#x270D; Note'],['commenti','&#x1F4AC; Domande'],['quiz','&#x2753; Quiz']];
+  var h='<div style="margin-top:16px"><div style="display:flex;gap:6px;margin-bottom:12px">';
+  tabs.forEach(function(t){
+    var tH=fn(function(){set('cv_etab',t[0]);});
+    h+='<button class="btn '+(activeTab===t[0]?'btn-g':'btn-gh')+' btn-xs" data-click="'+tH+'">'+t[1]+'</button>';
+  });
+  h+='</div>';
+  if(activeTab==='note'){
+    h+='<div style="font-size:.74rem;color:var(--t3);margin-bottom:8px">Solo tu puoi vedere queste note.</div>';
+    h+=renderNotePrivate(latt.id);
+  } else if(activeTab==='commenti'){
+    h+='<div style="font-size:.74rem;color:var(--t3);margin-bottom:8px">Commenti visibili a tutti. I contenuti irrispettosi vengono rimossi.</div>';
+    h+=renderCommentiLezione(latt.id);
+    if(isA){h+='<div style="margin-top:14px;padding-top:14px;border-top:1px solid var(--border)"><div style="font-size:.74rem;font-weight:700;color:var(--red);margin-bottom:8px">&#x1F6A8; MODERAZIONE — I commenti nascosti non sono visibili agli studenti</div></div>';}
+  } else if(activeTab==='quiz'){
+    if(isA){h+='<div style="margin-bottom:14px">'+renderAdminQuiz(latt.id)+'</div><hr style="border-color:var(--border);margin-bottom:12px"><div style="font-size:.74rem;color:var(--t3);margin-bottom:8px">Anteprima studente:</div>';}
+    h+=renderQuiz(latt.id);
+  }
+  h+='</div>';
+  return h;
+}
+
+// ═══════════════════════════════════════════════════════
+// PROFILO STUDENTE
+// ═══════════════════════════════════════════════════════
+function renderProfilo(){
+  var user=S('user',{});
+  var pts=S('d_pts',null);
+  var comp=S('d_comp',0);
+  var l=S('d_l',null);
+  var pct=l?Math.round(comp/(l||1)*100):0;
+  var html='<div class="page anim">';
+  // Hero
+  html+='<div style="text-align:center;padding:20px 0 24px">';
+  html+='<div style="width:72px;height:72px;border-radius:20px;background:var(--grad);display:flex;align-items:center;justify-content:center;font-size:1.6rem;font-weight:800;color:#000;margin:0 auto 12px">'+(user.nome||'?').split(' ').map(function(w){return w[0];}).join('').toUpperCase().slice(0,2)+'</div>';
+  html+='<div style="font-size:1.2rem;font-weight:800">'+esc(user.nome||'')+'</div>';
+  html+='<div style="font-size:.8rem;color:var(--t3);margin-top:3px">@'+esc(user.username||'')+' · '+(user.ruolo==='admin'?'Manager':user.ruolo==='istruttore'?'Istruttore':'Studente')+'</div>';
+  html+='</div>';
+  // Stats row
+  html+='<div style="display:flex;gap:10px;margin-bottom:18px">';
+  html+='<div class="prof-stat"><div style="font-size:1.6rem;font-weight:900;color:var(--gold)">'+(pts?pts.punti_totali||0:0)+'</div><div style="font-size:.72rem;color:var(--t2)">Punti</div></div>';
+  html+='<div class="prof-stat"><div style="font-size:1.6rem;font-weight:900;color:var(--red)">'+(pts?pts.streak_giorni||0:0)+'</div><div style="font-size:.72rem;color:var(--t2)">Streak</div></div>';
+  html+='<div class="prof-stat"><div style="font-size:1.6rem;font-weight:900;color:var(--cyan)">'+comp+'</div><div style="font-size:.72rem;color:var(--t2)">Lezioni</div></div>';
+  html+='<div class="prof-stat"><div style="font-size:1.6rem;font-weight:900;color:var(--green)">'+pct+'%</div><div style="font-size:.72rem;color:var(--t2)">Progresso</div></div>';
+  html+='</div>';
+  // Badge
+  if(pts&&pts.badge&&pts.badge.length){
+    html+='<div class="section-card"><div style="font-weight:700;margin-bottom:10px">&#x1F3C5; I tuoi badge</div><div style="display:flex;flex-wrap:wrap">';
+    pts.badge.forEach(function(bk){
+      var b=BADGES[bk];
+      if(!b)return;
+      html+='<div class="badge-chip"><div style="font-size:1.4rem">'+b.emoji+'</div><div style="font-size:.62rem;font-weight:700;color:var(--gold)">'+b.nome+'</div><div style="font-size:.58rem;color:var(--t3);text-align:center;max-width:70px;line-height:1.3">'+b.desc+'</div></div>';
+    });
+    html+='</div></div>';
+  }
+  // Certificati
+  html+=renderMieiCertificati();
+  // Messaggi privati
+  if(user.ruolo!=='admin'){
+    var mH=fn(function(){set('tab','messaggi');});
+    html+='<button class="menu-row" data-click="'+mH+'"><div class="menu-ico" style="background:rgba(6,182,212,.12);color:var(--cyan)">&#x1F4AC;</div><div style="flex:1"><div style="font-weight:600;font-size:.9rem">Messaggi privati</div><div style="font-size:.7rem;color:var(--t3);margin-top:2px">Scrivi al tuo istruttore</div></div><div class="menu-arr">&#x203A;</div></button>';
+  }
+  // Live
+  var lvH=fn(function(){set('tab','live');});
+  html+='<button class="menu-row" data-click="'+lvH+'"><div class="menu-ico" style="background:rgba(239,68,68,.12);color:var(--red)">&#x1F3A5;</div><div style="flex:1"><div style="font-weight:600;font-size:.9rem">Live & Replay</div></div><div class="menu-arr">&#x203A;</div></button>';
+  // Logout
+  var loH=fn(function(){_s={};draw();});
+  html+='<button class="menu-row" style="margin-top:8px;color:var(--red)" data-click="'+loH+'"><div class="menu-ico" style="background:rgba(239,68,68,.12);color:var(--red)">&#x23FB;</div><div style="flex:1"><div style="font-weight:700;font-size:.9rem">Esci</div></div></button>';
+  return html+'</div>';
+}
+function renderMieiCertificati(){
+  var user=S('user',{});
+  var certs=S('my_certs',null);
+  if(certs===null){
+    set('my_certs',[]);
+    sb('certificati?studente_id=eq.'+user.id+'&order=data_emissione.desc').then(function(r){set('my_certs',r||[]);});
+    return '';
+  }
+  if(!certs.length)return '';
+  var html='<div class="section-card"><div style="font-weight:700;margin-bottom:12px">&#x1F393; Certificati ottenuti</div>';
+  certs.forEach(function(c){
+    var dlH=fn(function(){
+      var data=new Date(c.data_emissione).toLocaleDateString('it-IT');
+      if(!window.jspdf){
+        var tag=document.createElement('script');
+        tag.src='https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
+        tag.onload=function(){generaCertificatoPDF(c.studente_nome,c.corso_titolo,'🏆',c.codice_verifica,data);};
+        document.head.appendChild(tag);
+      } else {
+        generaCertificatoPDF(c.studente_nome,c.corso_titolo,'🏆',c.codice_verifica,data);
+      }
+    });
+    html+='<div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--border)"><div style="font-size:1.6rem">&#x1F3C6;</div><div style="flex:1;min-width:0"><div style="font-weight:600;font-size:.88rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(c.corso_titolo)+'</div><div style="font-size:.72rem;color:var(--t3)">'+new Date(c.data_emissione).toLocaleDateString('it-IT')+'</div></div><button class="btn btn-g btn-xs" data-click="'+dlH+'">&#x2B07; Scarica</button></div>';
+  });
+  return html+'</div>';
+}
+
+// ═══════════════════════════════════════════════════════
+// ANALYTICS ADMIN
+// ═══════════════════════════════════════════════════════
+function loadAnalytics(){
+  sb('utenti?ruolo=eq.studente').then(function(r){set('an_students',r||[]);});
+  sb('progressi?completata=eq.true').then(function(r){set('an_prog',r||[]);});
+  sb('punti_studente?order=punti_totali.desc').then(function(r){set('an_pts',r||[]);});
+  sb('corsi?pubblicato=eq.true').then(function(r){set('an_corsi',r||[]);});
+  sb('lezioni').then(function(r){set('an_lez',r||[]);});
+}
+function renderAnalytics(){
+  var students=S('an_students',null);
+  if(students===null){loadAnalytics();return '<div class="page anim">'+loading()+'</div>';}
+  var prog=S('an_prog',[]);
+  var pts=S('an_pts',[]);
+  var corsi=S('an_corsi',[]);
+  var lez=S('an_lez',[]);
+  var tot_lez=lez.length;
+  var html='<div class="page anim">';
+  // KPI
+  var totComp=prog.length;
+  var active=students.filter(function(s){var p=pts.find(function(x){return x.studente_id===s.id;});return p&&p.ultimo_studio&&(new Date()-new Date(p.ultimo_studio))<7*86400000;});
+  html+='<div class="kpi-grid" style="margin-bottom:18px">';
+  html+='<div class="kpi-card"><div class="kpi-ico" style="background:rgba(245,158,11,.12);color:var(--gold)">&#x1F465;</div><div class="kpi-val" style="color:var(--gold)">'+students.length+'</div><div class="kpi-lbl">Studenti totali</div></div>';
+  html+='<div class="kpi-card"><div class="kpi-ico" style="background:rgba(16,185,129,.12);color:var(--green)">&#x1F525;</div><div class="kpi-val" style="color:var(--green)">'+active.length+'</div><div class="kpi-lbl">Attivi (7gg)</div></div>';
+  html+='<div class="kpi-card"><div class="kpi-ico" style="background:rgba(6,182,212,.12);color:var(--cyan)">&#x2705;</div><div class="kpi-val" style="color:var(--cyan)">'+totComp+'</div><div class="kpi-lbl">Lezioni completate</div></div>';
+  html+='</div>';
+  // Leaderboard
+  html+='<div class="section-card" style="margin-bottom:14px"><div style="font-weight:700;margin-bottom:12px">&#x1F3C6; Classifica studenti</div>';
+  var topPts=pts.slice(0,10);
+  if(!topPts.length){html+='<div style="color:var(--t3);font-size:.84rem">Nessun dato ancora.</div>';}
+  topPts.forEach(function(p,i){
+    var st=students.find(function(s){return s.id===p.studente_id;});
+    if(!st)return;
+    var stComp=prog.filter(function(x){return x.studente_id===p.studente_id;}).length;
+    var stPct=tot_lez?Math.round(stComp/tot_lez*100):0;
+    var medal=i===0?'&#x1F947;':i===1?'&#x1F948;':i===2?'&#x1F949;':('&#35;'+(i+1));
+    var rankColor=i===0?'#F59E0B':i===1?'#94A3B8':i===2?'#CD7F32':'var(--t3)';
+    html+='<div class="lb-row" style="background:'+(i<3?'rgba(245,158,11,.05)':'transparent')+'"><div class="lb-rank" style="background:'+(i<3?rankColor:'rgba(255,255,255,.07)')+';color:'+(i<3?'#000':'var(--t2)')+'">'+medal+'</div><div style="flex:1;min-width:0"><div style="font-weight:600;font-size:.88rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(st.nome)+'</div><div style="display:flex;align-items:center;gap:7px;margin-top:3px"><div class="prog-bar-sm"><div class="prog-fill-sm" style="width:'+stPct+'%"></div></div><div style="font-size:.68rem;color:var(--t3);flex-shrink:0">'+stPct+'%</div></div></div><div style="text-align:right;flex-shrink:0"><div style="font-size:1rem;font-weight:900;color:var(--gold)">'+p.punti_totali+'</div><div style="font-size:.65rem;color:var(--t3)">pts</div></div></div>';
+  });
+  html+='</div>';
+  // Progresso per studente
+  html+='<div class="section-card"><div style="font-weight:700;margin-bottom:12px">&#x1F4CA; Avanzamento individuale</div>';
+  students.forEach(function(s){
+    var stComp=prog.filter(function(x){return x.studente_id===s.id;}).length;
+    var stPct=tot_lez?Math.round(stComp/tot_lez*100):0;
+    var stPts=pts.find(function(x){return x.studente_id===s.id;});
+    var streak=stPts?stPts.streak_giorni||0:0;
+    var lastS=stPts&&stPts.ultimo_studio?new Date(stPts.ultimo_studio).toLocaleDateString('it-IT'):'Mai';
+    var isRisk=(new Date()-new Date(stPts&&stPts.ultimo_studio||0))>14*86400000;
+    html+='<div class="stat-row"><div style="min-width:0;flex:1"><div style="font-weight:600;font-size:.88rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(s.nome)+'</div><div style="font-size:.7rem;color:var(--t3);margin-top:2px">Ultimo accesso: '+lastS+(isRisk?' <span style="color:var(--red)">&#x26A0; Inattivo 14gg+</span>':'')+'</div></div><div style="display:flex;align-items:center;gap:8px;flex-shrink:0"><div style="font-size:.7rem;color:var(--t3)">&#x1F525;'+streak+'</div><div style="text-align:right"><div style="font-weight:700;color:'+(stPct>=70?'var(--green)':stPct>=30?'var(--gold)':'var(--red)')+'">'+stPct+'%</div><div style="font-size:.65rem;color:var(--t3)">'+stComp+'/'+tot_lez+'</div></div></div></div>';
+  });
+  if(!students.length)html+='<div style="color:var(--t3);font-size:.84rem">Nessuno studente ancora.</div>';
+  html+='</div></div>';
+  return html;
+}
+
+// ═══════════════════════════════════════════════════════
+// SEARCH GLOBALE
+// ═══════════════════════════════════════════════════════
+function renderSearch(){
+  var q=S('sr_q','');
+  var results=S('sr_res',null);
+  var srH=fn(function(e){
+    var v=e.target.value;
+    set('sr_q',v);
+    if(v.length<2){set('sr_res',null);return;}
+    var low=v.toLowerCase();
+    // search corsi + lezioni + risorse
+    var res=[];
+    var corsi=S('ci_l',null)||[];
+    corsi.forEach(function(c){
+      if((c.titolo||'').toLowerCase().indexOf(low)>=0||(c.descrizione||'').toLowerCase().indexOf(low)>=0)
+        res.push({tipo:'corso',id:c.id,titolo:c.titolo,sub:c.istruttore_nome||'Academy',obj:c});
+    });
+    var lez=S('cv_all_lez',[]);
+    lez.forEach(function(l){
+      if((l.titolo||'').toLowerCase().indexOf(low)>=0||(l.contenuto||'').toLowerCase().indexOf(low)>=0)
+        res.push({tipo:'lezione',id:l.id,titolo:l.titolo,sub:l.corso_titolo||'',obj:l});
+    });
+    set('sr_res',res.slice(0,20));
+  });
+  // Load all data for search if not loaded
+  if(!S('cv_all_lez',null)){
+    sb('lezioni?order=ordine.asc').then(function(r){set('cv_all_lez',r||[]);});
+  }
+  if(!S('ci_l',null)){
+    sb('corsi?pubblicato=eq.true&order=ordine.asc').then(function(r){set('ci_l',r);});
+  }
+  var html='<div class="page anim"><div style="margin-bottom:14px"><input class="fi" placeholder="&#x1F50D; Cerca corsi, lezioni, risorse..." value="'+esc(q)+'" data-change="'+srH+'" style="font-size:.95rem;padding:13px"></div>';
+  if(q.length<2){
+    html+='<div style="text-align:center;color:var(--t3);padding:40px;font-size:.88rem">Scrivi almeno 2 caratteri per cercare</div>';
+  } else if(!results){
+    html+=loading();
+  } else if(!results.length){
+    html+='<div style="text-align:center;color:var(--t3);padding:40px">Nessun risultato per "'+esc(q)+'"</div>';
+  } else {
+    results.forEach(function(r){
+      var icoMap={corso:'&#x1F4DA;',lezione:'&#x25B6;&#xFE0F;',risorsa:'&#x1F4C1;'};
+      var clickH=fn(function(){
+        if(r.tipo==='corso'){set('tab','corsi');set('ci_l',null);}
+        else if(r.tipo==='lezione'){set('tab','corsi');}
+      });
+      html+='<div class="sr-item" data-click="'+clickH+'"><div style="display:flex;align-items:center;gap:10px"><div style="font-size:1.2rem">'+icoMap[r.tipo]+'</div><div style="flex:1;min-width:0"><div style="font-weight:600;font-size:.9rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(r.titolo)+'</div><div style="font-size:.72rem;color:var(--t3);margin-top:2px"><span class="sr-tag">'+r.tipo+'</span>'+esc(r.sub)+'</div></div></div></div>';
+    });
+  }
+  return html+'</div>';
+}
+
+// ═══════════════════════════════════════════════════════
+// MESSAGGI PRIVATI (controllati)
+// ═══════════════════════════════════════════════════════
+function loadMessaggi(){
+  var user=S('user',{});
+  if(!user.id)return;
+  var isA=user.ruolo==='admin';
+  if(isA){
+    sb('messaggi_privati?order=created_at.desc').then(function(r){set('mp_all',r||[]);});
+  } else {
+    sb('messaggi_privati?or=(mittente_id.eq.'+user.id+',destinatario_id.eq.'+user.id+')&order=created_at.asc').then(function(r){set('mp_msgs',r||[]);});
+    sb('utenti?ruolo=in.(istruttore,admin)&attivo=eq.true').then(function(r){set('mp_istr',r||[]);});
+  }
+}
+function renderMessaggi(){
+  var user=S('user',{});
+  var isA=user.ruolo==='admin';
+  if(isA)return renderMessaggiAdmin();
+  var msgs=S('mp_msgs',null);
+  var istr=S('mp_istr',null);
+  if(msgs===null||istr===null){loadMessaggi();return '<div class="page anim">'+loading()+'</div>';}
+  var selected=S('mp_sel',null);
+  var html='<div class="page anim">';
+  if(!selected){
+    html+='<div style="font-size:.84rem;color:var(--t2);margin-bottom:14px;padding:12px;background:var(--card);border-radius:12px;border:1px solid var(--border)">&#x2139; I messaggi sono per domande importanti. Usa la Community per i confronti con il team.</div>';
+    istr.forEach(function(i){
+      var unread=msgs.filter(function(m){return m.mittente_id===i.id&&!m.letto;}).length;
+      var h=fn(function(){set('mp_sel',i.id);});
+      html+='<div class="list-item" data-click="'+h+'"><div style="font-size:1.4rem">&#x1F464;</div><div style="flex:1;min-width:0"><div style="font-weight:700">'+esc(i.nome)+'</div><div style="font-size:.74rem;color:var(--t3)">'+esc(i.ruolo==='admin'?'Manager':'Istruttore')+'</div></div>'+(unread?'<span class="badge bg-red">'+unread+'</span>':'<span style="color:var(--t3)">&#x203A;</span>')+'</div>';
+    });
+    if(!istr.length)html+='<div style="text-align:center;color:var(--t3);padding:40px">Nessun istruttore disponibile.</div>';
+  } else {
+    var thread=msgs.filter(function(m){return m.mittente_id===selected||m.destinatario_id===selected;});
+    var dest=istr.find(function(i){return i.id===selected;});
+    var bkH=fn(function(){set('mp_sel',null);});
+    html+='<button class="btn btn-gh btn-sm" style="margin-bottom:14px" data-click="'+bkH+'">&#x2190; Indietro</button>';
+    html+='<div style="font-weight:700;margin-bottom:14px">&#x1F4AC; '+esc(dest?dest.nome:'')+'</div>';
+    html+='<div style="min-height:200px;margin-bottom:12px">';
+    thread.forEach(function(m){
+      var isOut=m.mittente_id===user.id;
+      html+='<div style="display:flex;flex-direction:'+(isOut?'row-reverse':'row')+';margin-bottom:8px"><div class="msg-bubble '+(isOut?'out':'in')+'"><div style="font-size:.68rem;color:var(--t3);margin-bottom:3px">'+ago(m.created_at)+'</div>'+esc(m.contenuto)+'</div></div>';
+    });
+    if(!thread.length)html+='<div style="text-align:center;color:var(--t3);padding:30px;font-size:.84rem">Inizia la conversazione</div>';
+    html+='</div>';
+    var pubH=fn(function(){
+      var t=document.getElementById('mp_new');
+      if(!t||!t.value.trim())return;
+      if(t.value.length>1000){alert('Max 1000 caratteri.');return;}
+      sb('messaggi_privati',{method:'POST',body:JSON.stringify({mittente_id:user.id,mittente_nome:user.nome,destinatario_id:selected,contenuto:t.value.trim()})}).then(function(){t.value='';loadMessaggi();});
+    });
+    html+='<div style="display:flex;gap:8px"><textarea id="mp_new" class="fi" rows="2" style="flex:1;resize:none" placeholder="Scrivi un messaggio..." maxlength="1000"></textarea><button class="btn btn-g btn-sm" style="flex-shrink:0;align-self:flex-end" data-click="'+pubH+'">&#x27A4;</button></div>';
+  }
+  return html+'</div>';
+}
+function renderMessaggiAdmin(){
+  var msgs=S('mp_all',null);
+  if(msgs===null){loadMessaggi();return '<div class="page anim">'+loading()+'</div>';}
+  // Group by conversation
+  var threads={};
+  msgs.forEach(function(m){
+    var key=[m.mittente_id,m.destinatario_id].sort().join('_');
+    if(!threads[key])threads[key]=[];
+    threads[key].push(m);
+  });
+  var html='<div class="page anim"><div style="font-weight:700;margin-bottom:14px">&#x1F4AC; Messaggi privati</div>';
+  var keys=Object.keys(threads);
+  if(!keys.length){html+='<div style="text-align:center;color:var(--t3);padding:40px">Nessun messaggio ancora.</div>';return html+'</div>';}
+  keys.forEach(function(k){
+    var th=threads[k];
+    var last=th[th.length-1];
+    var dH=fn(function(){set('mp_asel',k);set('mp_amsgs',th);});
+    html+='<div class="list-item" data-click="'+dH+'"><div style="font-size:1.3rem">&#x1F4AC;</div><div style="flex:1;min-width:0"><div style="font-weight:600;font-size:.9rem">'+esc(last.mittente_nome)+'</div><div style="font-size:.76rem;color:var(--t3);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(last.contenuto.slice(0,50))+'</div></div><div style="font-size:.68rem;color:var(--t3)">'+ago(last.created_at)+'</div></div>';
+  });
+  if(S('mp_asel',null)){
+    var th2=S('mp_amsgs',[]);
+    var cx=fn(function(){set('mp_asel',null);});
+    html+='<div class="modal-ov" onclick="if(event.target===this)set(\'mp_asel\',null)"><div class="modal-box"><button class="modal-x" data-click="'+cx+'">&#x2715;</button><div class="modal-title">&#x1F4AC; Conversazione</div>';
+    th2.forEach(function(m){
+      html+='<div style="margin-bottom:10px"><div style="font-size:.72rem;color:var(--t3);margin-bottom:3px">'+esc(m.mittente_nome)+' · '+ago(m.created_at)+'</div><div style="background:var(--bg2);border-radius:10px;padding:10px 13px;font-size:.87rem">'+esc(m.contenuto)+'</div></div>';
+    });
+    // Admin reply
+    var repH=fn(function(){
+      var t=document.getElementById('mp_admin_rep');
+      if(!t||!t.value.trim())return;
+      var last2=th2[th2.length-1];
+      var dest=last2.mittente_id===S('user',{}).id?last2.destinatario_id:last2.mittente_id;
+      var user2=S('user',{});
+      sb('messaggi_privati',{method:'POST',body:JSON.stringify({mittente_id:user2.id,mittente_nome:user2.nome,destinatario_id:dest,contenuto:t.value.trim()})}).then(function(){t.value='';loadMessaggi();set('mp_asel',null);});
+    });
+    html+='<div style="display:flex;gap:8px;margin-top:12px"><input id="mp_admin_rep" class="fi" style="flex:1" placeholder="Rispondi..."><button class="btn btn-g btn-sm" data-click="'+repH+'">&#x27A4;</button></div>';
+    html+='</div></div>';
+  }
+  return html+'</div>';
+}
+
+// ═══════════════════════════════════════════════════════
+// ENROLLMENT — Admin assegna corsi
+// ═══════════════════════════════════════════════════════
+function loadEnrollments(corsoId){
+  sb('enrollments?corso_id=eq.'+corsoId).then(function(r){set('enr_'+corsoId,r||[]);});
+}
+function renderEnrollmentPanel(corso){
+  var students=S('ut_studente',[]);
+  var enrs=S('enr_'+corso.id,null);
+  if(enrs===null){loadEnrollments(corso.id);return '<div style="color:var(--t3);font-size:.82rem">Caricamento...</div>';}
+  var html='';
+  var aperto=corso.enrollment_aperto!==false;
+  var togH=fn(function(){sb('corsi?id=eq.'+corso.id,{method:'PATCH',body:JSON.stringify({enrollment_aperto:!aperto})}).then(function(r){if(r&&r.length){var c=S('ac_c',[]);var idx=c.findIndex(function(x){return x.id===corso.id;});if(idx>=0){c[idx]=r[0];set('ac_c',c);}}});});
+  html+='<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px"><div style="font-size:.84rem;font-weight:600">&#x1F512; Accesso corso</div><button class="btn '+(aperto?'btn-g':'btn-gh')+' btn-xs" data-click="'+togH+'">'+(aperto?'&#x1F513; Aperto a tutti':'&#x1F512; Solo assegnati')+'</button></div>';
+  if(!aperto){
+    html+='<div style="font-size:.74rem;color:var(--t3);margin-bottom:8px">Studenti con accesso:</div>';
+    students.forEach(function(s){
+      var enr=enrs.find(function(e){return e.studente_id===s.id;});
+      var tH=fn(function(){
+        if(enr){sb('enrollments?id=eq.'+enr.id,{method:'DELETE'}).then(function(){loadEnrollments(corso.id);});}
+        else{sb('enrollments',{method:'POST',body:JSON.stringify({studente_id:s.id,corso_id:corso.id})}).then(function(){loadEnrollments(corso.id);});}
+      });
+      html+='<div style="display:flex;align-items:center;gap:9px;padding:7px 0;border-bottom:1px solid var(--border)"><div style="flex:1;font-size:.85rem">'+esc(s.nome)+'</div><button class="btn '+(enr?'btn-g':'btn-gh')+' btn-xs" data-click="'+tH+'">'+(enr?'&#x2705; Assegnato':'+ Assegna')+'</button></div>';
+    });
+  }
+  return html;
+}
+
+// ═══════════════════════════════════════════════════════
+// PATCH renderCorsi for enrollment filtering
+// ═══════════════════════════════════════════════════════
+var _origLoadCorsi=window.loadCorsi||function(){};
+function loadCorsi(){
+  var user=S('user',{});
+  var isA=user.ruolo==='admin';
+  sb('corsi?order=ordine.asc'+(isA?'':'&pubblicato=eq.true')).then(function(corsi){
+    if(isA||!user.id){set('ci_l',corsi);return;}
+    // Filter by enrollment
+    sb('enrollments?studente_id=eq.'+user.id).then(function(enrs){
+      var filtered=corsi.filter(function(c){
+        if(c.enrollment_aperto!==false)return true;
+        return enrs.some(function(e){return e.corso_id===c.id;});
+      });
+      set('ci_l',filtered);
+    });
+  });
+}
+
+// ═══════════════════════════════════════════════════════
+// CERTIFICATO POPUP quando corso completato
+// ═══════════════════════════════════════════════════════
+function renderCertPopup(){
+  var cert=S('cert_just',null);
+  if(!cert)return '';
+  var dlH=fn(function(){
+    var c=cert.cert;
+    var data=new Date(c.data_emissione).toLocaleDateString('it-IT');
+    if(!window.jspdf){
+      var tag=document.createElement('script');
+      tag.src='https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
+      tag.onload=function(){generaCertificatoPDF(c.studente_nome,c.corso_titolo,cert.corso.emoji||'🏆',c.codice_verifica,data);};
+      document.head.appendChild(tag);
+    } else {
+      generaCertificatoPDF(c.studente_nome,c.corso_titolo,cert.corso.emoji||'🏆',c.codice_verifica,data);
+    }
+  });
+  var cx=fn(function(){set('cert_just',null);set('my_certs',null);});
+  return '<div class="modal-ov"><div class="modal-box" style="text-align:center"><button class="modal-x" data-click="'+cx+'">&#x2715;</button><div style="font-size:3rem;margin-bottom:8px">&#x1F3C6;</div><div style="font-size:1.2rem;font-weight:800;color:var(--gold);margin-bottom:6px">Corso completato!</div><div style="font-size:.9rem;color:var(--t2);margin-bottom:18px">Hai completato "'+esc(cert.corso.titolo)+'"<br>Il tuo certificato è pronto!</div><button class="btn btn-g btn-full" style="margin-bottom:10px" data-click="'+dlH+'">&#x2B07; Scarica certificato PDF</button><button class="btn btn-gh btn-sm" data-click="'+cx+'">Chiudi</button></div></div>';
+}
 </script>
 </body>
 </html>
