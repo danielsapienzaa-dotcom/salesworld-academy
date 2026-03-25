@@ -251,7 +251,7 @@ select.fi{cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xmlns='
   .kpi-grid{grid-template-columns:repeat(3,1fr)}
 }
 
-</style>
+</style></style>
 </head>
 <body>
 <div id="app"></div>
@@ -936,57 +936,9 @@ function render(){
 
 _root=document.getElementById('app');
 draw();
-})();
 
 
-window._switchVideoTab=function(btn,isYt){
-  var ytBlock=document.getElementById('vblock_yt');
-  var upBlock=document.getElementById('vblock_up');
-  var ytBtn=document.getElementById('vtab_yt');
-  var upBtn=document.getElementById('vtab_up');
-  if(!ytBlock||!upBlock)return;
-  if(isYt){
-    ytBlock.style.display='';upBlock.style.display='none';
-    ytBtn.className='btn btn-g btn-xs';upBtn.className='btn btn-gh btn-xs';
-  }else{
-    ytBlock.style.display='none';upBlock.style.display='';
-    ytBtn.className='btn btn-gh btn-xs';upBtn.className='btn btn-g btn-xs';
-  }
-};
-window._handleVideoFile=function(file){
-  if(!file)return;
-  var zone=document.getElementById('drop_zone');
-  var icon=document.getElementById('up_icon');
-  var lbl=document.getElementById('up_label');
-  var prog=document.getElementById('up_prog');
-  var fill=document.getElementById('up_fill');
-  var status=document.getElementById('up_status');
-  var urlField=document.getElementById('al_v');
-  if(prog)prog.style.display='block';
-  if(lbl)lbl.textContent='Caricamento in corso...';
-  if(icon)icon.textContent='\u23F3';
-  if(status)status.textContent='';
-  window.uploadVideoFile(file,
-    function(pct){if(fill)fill.style.width=pct+'%';if(lbl)lbl.textContent='Caricamento: '+pct+'%';},
-    function(url){
-      if(fill)fill.style.width='100%';
-      if(icon)icon.textContent='\u2705';
-      if(lbl)lbl.innerHTML='<b>Video caricato!</b><br><span style="color:var(--t3);font-size:.7rem">'+file.name+'</span>';
-      if(status)status.innerHTML='<span style="color:var(--green)">\u2705 Upload completato — il video verr\u00e0 salvato con la lezione</span>';
-      if(urlField)urlField.value=url;
-    },
-    function(err){
-      if(icon)icon.textContent='\u274C';
-      if(lbl)lbl.textContent='Tocca per riprovare';
-      if(status)status.innerHTML='<span style="color:var(--red)">\u274C '+err+'</span>';
-      if(prog)prog.style.display='none';
-    }
-  );
-};
-window._handleVideoDrop=function(e){
-  var f=e.dataTransfer.files[0];
-  if(f)window._handleVideoFile(f);
-};
+
 
 // ═══════════════════════════════════════════════════════
 // GAMIFICATION
@@ -1624,6 +1576,60 @@ function renderCertPopup(){
   var cx=fn(function(){set('cert_just',null);set('my_certs',null);});
   return '<div class="modal-ov"><div class="modal-box" style="text-align:center"><button class="modal-x" data-click="'+cx+'">&#x2715;</button><div style="font-size:3rem;margin-bottom:8px">&#x1F3C6;</div><div style="font-size:1.2rem;font-weight:800;color:var(--gold);margin-bottom:6px">Corso completato!</div><div style="font-size:.9rem;color:var(--t2);margin-bottom:18px">Hai completato "'+esc(cert.corso.titolo)+'"<br>Il tuo certificato è pronto!</div><button class="btn btn-g btn-full" style="margin-bottom:10px" data-click="'+dlH+'">&#x2B07; Scarica certificato PDF</button><button class="btn btn-gh btn-sm" data-click="'+cx+'">Chiudi</button></div></div>';
 }
-</script>
+
+
+})();
+
+
+
+
+window._switchVideoTab=function(btn,isYt){
+  var ytBlock=document.getElementById('vblock_yt');
+  var upBlock=document.getElementById('vblock_up');
+  var ytBtn=document.getElementById('vtab_yt');
+  var upBtn=document.getElementById('vtab_up');
+  if(!ytBlock||!upBlock)return;
+  if(isYt){
+    ytBlock.style.display='';upBlock.style.display='none';
+    ytBtn.className='btn btn-g btn-xs';upBtn.className='btn btn-gh btn-xs';
+  }else{
+    ytBlock.style.display='none';upBlock.style.display='';
+    ytBtn.className='btn btn-gh btn-xs';upBtn.className='btn btn-g btn-xs';
+  }
+};
+window._handleVideoFile=function(file){
+  if(!file)return;
+  var zone=document.getElementById('drop_zone');
+  var icon=document.getElementById('up_icon');
+  var lbl=document.getElementById('up_label');
+  var prog=document.getElementById('up_prog');
+  var fill=document.getElementById('up_fill');
+  var status=document.getElementById('up_status');
+  var urlField=document.getElementById('al_v');
+  if(prog)prog.style.display='block';
+  if(lbl)lbl.textContent='Caricamento in corso...';
+  if(icon)icon.textContent='\u23F3';
+  if(status)status.textContent='';
+  window.uploadVideoFile(file,
+    function(pct){if(fill)fill.style.width=pct+'%';if(lbl)lbl.textContent='Caricamento: '+pct+'%';},
+    function(url){
+      if(fill)fill.style.width='100%';
+      if(icon)icon.textContent='\u2705';
+      if(lbl)lbl.innerHTML='<b>Video caricato!</b><br><span style="color:var(--t3);font-size:.7rem">'+file.name+'</span>';
+      if(status)status.innerHTML='<span style="color:var(--green)">\u2705 Upload completato — il video verr\u00e0 salvato con la lezione</span>';
+      if(urlField)urlField.value=url;
+    },
+    function(err){
+      if(icon)icon.textContent='\u274C';
+      if(lbl)lbl.textContent='Tocca per riprovare';
+      if(status)status.innerHTML='<span style="color:var(--red)">\u274C '+err+'</span>';
+      if(prog)prog.style.display='none';
+    }
+  );
+};
+window._handleVideoDrop=function(e){
+  var f=e.dataTransfer.files[0];
+  if(f)window._handleVideoFile(f);
+};</script>
 </body>
 </html>
