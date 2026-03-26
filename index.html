@@ -251,6 +251,9 @@ select.fi{cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xmlns='
   .kpi-grid{grid-template-columns:repeat(3,1fr)}
 }
 
+
+.lez-row.locked{opacity:.42;cursor:not-allowed}
+.lez-ck.locked{background:rgba(255,255,255,.05);border-color:rgba(255,255,255,.1)}
 </style></style>
 </head>
 <body>
@@ -542,6 +545,13 @@ function loadCVData(corso){
 function renderCV(corso){
   var mods=S('cv_m',[]),lez=S('cv_l',[]),prog=S('cv_p',[]),latt=S('cv_la',null),mopen=S('cv_mo',null);
   function isDone(lid){return prog.some(function(p){return p.lezione_id===lid&&p.completata;});}
+  var sequenziale=corso.sequenziale===true;
+  function isUnlocked(lezId){
+    if(!sequenziale)return true;
+    var idx=lez.findIndex(function(l){return l.id===lezId;});
+    if(idx<=0)return true;
+    return isDone(lez[idx-1].id);
+  }
   var tot=lez.length,comp=lez.filter(function(l){return isDone(l.id);}).length,pct=tot?Math.round(comp/tot*100):0;
   var vid=latt?ytId(latt.video_url):null;
   function segnaH(lid){return fn(function(){
@@ -576,13 +586,18 @@ function renderCV(corso){
     var lm=lez.filter(function(l){return l.modulo_id===m.id;}),cm=lm.filter(function(l){return isDone(l.id);}).length;
     var tH=fn(function(){set('cv_mo',mopen===m.id?null:m.id);});
     var lH=mopen===m.id?lm.map(function(l){
-      var sh=fn(function(){set('cv_la',l);});
-      return '<div class="lez-row'+(latt&&latt.id===l.id?' active':'')+'" data-click="'+sh+'">'
-        +'<div class="lez-ck'+(isDone(l.id)?' done':'')+'">'+(isDone(l.id)?'&#x2713;':'')+'</div>'
+      var unlocked=isUnlocked(l.id);
+      var sh=unlocked?fn(function(){set('cv_la',l);}):fn(function(){
+        var el=document.getElementById('lock_tip');
+        if(el){el.style.opacity='1';clearTimeout(el._t);el._t=setTimeout(function(){el.style.opacity='0';},2500);}
+      });
+      var rowCls='lez-row'+(latt&&latt.id===l.id?' active':'')+(unlocked?'':' locked');
+      return '<div class="'+rowCls+'" data-click="'+sh+'">'
+        +'<div class="lez-ck'+(isDone(l.id)?' done':(unlocked?'':' locked'))+'">'+(isDone(l.id)?'&#x2713;':(unlocked?'':'&#x1F512;'))+'</div>'
         +'<div style="flex:1;min-width:0"><div style="font-size:.86rem;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(l.titolo)+'</div>'
         +(l.durata_minuti>0?'<div style="font-size:.68rem;color:var(--t3)">'+l.durata_minuti+' min</div>':'')+'</div>'
-        +(l.video_url?'<span style="color:var(--gold);font-size:.9rem">&#x25B6;</span>':'')
-      +'</div>';
+        +(unlocked?(l.video_url?'<span style="color:var(--gold)">&#x25B6;</span>':''):'<span style="color:var(--t3)">&#x1F512;</span>')
+        +'</div>';
     }).join(''):'';
     return '<div class="mod-block">'
       +'<button class="mod-hdr" data-click="'+tH+'">'
@@ -700,7 +715,7 @@ function renderAdminCorsi(){
     var ec=S('ac_ec',null),io=[['','Academy']].concat(istr.map(function(x){return[x.id,x.nome];}));
     var sH=fn(function(){var t=rv('ac_t');if(!t)return;var iid=rv('ac_is'),inn=istr.find(function(x){return x.id===iid;});var data={titolo:t,descrizione:rv('ac_d'),emoji:rv('ac_e')||'&#x1F4DA;',livello:rv('ac_lv'),colore:'#F59E0B',istruttore_id:iid,istruttore_nome:inn?inn.nome:'Academy',pubblicato:rv('ac_pb')==='si'};var p=ec?sb('corsi?id=eq.'+ec.id,{method:'PATCH',body:JSON.stringify(data)}):sb('corsi',{method:'POST',body:JSON.stringify(data)});p.then(function(){set('ac_showc',false);sb('corsi?order=ordine.asc').then(function(r){set('ac_c',r);});});});
     var cx=fn(function(){set('ac_showc',false);});
-    modals+='<div class="modal-ov" onclick="if(event.target===this)set(\'ac_showc\',false)"><div class="modal-box">'+mX(cx)+'<div class="modal-title">&#x1F4DA; '+(ec?'Modifica':'Nuovo corso')+'</div><div class="g2f">'+lbl('Emoji',inp('ac_e','','text',ec?ec.emoji||'📚':'📚'))+lbl('Titolo *',inp('ac_t','Nome del corso','text',ec?ec.titolo:''))+'</div>'+lbl('Descrizione',ta('ac_d','Descrizione',ec?ec.descrizione||'':''))+'<div class="g2f">'+lbl('Livello',sel('ac_lv',[['base','Base'],['intermedio','Intermedio'],['avanzato','Avanzato']],ec?ec.livello:'base'))+lbl('Stato',sel('ac_pb',[['no','Bozza'],['si','Pubblicato']],ec?(ec.pubblicato?'si':'no'):'no'))+'</div>'+lbl('Istruttore',sel('ac_is',io,ec?ec.istruttore_id||'':''))+'<button class="btn btn-g btn-full" style="margin-top:8px" data-click="'+sH+'">&#x1F4BE; Salva corso</button></div></div>';
+    modals+='<div class="modal-ov" onclick="if(event.target===this)set(\'ac_showc\',false)"><div class="modal-box">'+mX(cx)+'<div class="modal-title">&#x1F4DA; '+(ec?'Modifica':'Nuovo corso')+'</div><div class="g2f">'+lbl('Emoji',inp('ac_e','','text',ec?ec.emoji||'📚':'📚'))+lbl('Titolo *',inp('ac_t','Nome del corso','text',ec?ec.titolo:''))+'</div>'+lbl('Descrizione',ta('ac_d','Descrizione',ec?ec.descrizione||'':''))+'<div class="g2f">'+lbl('Livello',sel('ac_lv',[['base','Base'],['intermedio','Intermedio'],['avanzato','Avanzato']],ec?ec.livello:'base'))+lbl('Stato',sel('ac_pb',[['no','Bozza'],['si','Pubblicato']],ec?(ec.pubblicato?'si':'no'):'no'))+'</div>'+lbl('Istruttore',sel('ac_is',io,ec?ec.istruttore_id||'':''))+lbl('Sblocco lezioni',sel('ac_seq',[['no','&#x1F513; Libero'],['si','&#x1F512; Sequenziale']],ec?(ec.sequenziale?'si':'no'):'no'))+'<button class="btn btn-g btn-full" style="margin-top:8px" data-click="'+sH+'">&#x1F4BE; Salva corso</button></div></div>';
   }
   if(S('ac_showm',false)){
     var em=S('ac_em',null);
